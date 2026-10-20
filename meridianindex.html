@@ -1,0 +1,2905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Meridian — Donor-Advised Fund Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --paper: #f6f3ec;
+    --paper-2: #efeae0;
+    --paper-3: #e6dfd1;
+    --ink: #1a1a17;
+    --ink-2: #3a3a35;
+    --ink-3: #6b6b63;
+    --ink-4: #96958c;
+    --rule: #d9d3c3;
+    --rule-2: #c8c0ac;
+    --moss: #2d4a3a;
+    --moss-2: #3f6b55;
+    --moss-light: #e4ebe4;
+    --warn: #a85d2a;
+    --warn-light: #f4e6d6;
+    --danger: #8a2a2a;
+    --danger-light: #f0dede;
+    --ok: #2d4a3a;
+    --ok-light: #e4ebe4;
+    --info-light: #e2e8ea;
+    --info: #2d4a5a;
+    --console-bg: #141412;
+    --console-fg: #d4d1c7;
+    --console-dim: #7a776f;
+    --console-ok: #7fa386;
+    --console-warn: #c89060;
+    --console-err: #c47878;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .serif { font-family: 'Fraunces', Georgia, serif; font-feature-settings: 'ss01', 'ss02'; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ==== TOP BAR ==== */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 32px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--moss); position: relative;
+  }
+  .brand-mark::after {
+    content: ''; position: absolute; inset: 6px;
+    border: 1.5px solid var(--paper); border-radius: 50%;
+  }
+  .brand-name { font-family: 'Fraunces', serif; font-weight: 500; font-size: 20px; letter-spacing: -0.01em; }
+  .brand-sub { color: var(--ink-3); font-size: 12px; margin-top: -2px; letter-spacing: 0.02em; }
+  .top-right { display: flex; align-items: center; gap: 24px; }
+
+  .role-switch {
+    display: inline-flex;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 100px;
+    padding: 3px;
+    position: relative;
+  }
+  .role-btn {
+    position: relative; z-index: 1;
+    padding: 7px 18px;
+    border: none; background: transparent;
+    font-size: 13px; font-weight: 500;
+    color: var(--ink-3); cursor: pointer;
+    border-radius: 100px;
+    transition: color 0.2s;
+    font-family: inherit;
+  }
+  .role-btn.active { color: var(--paper); }
+  .role-switch-slider {
+    position: absolute; top: 3px; bottom: 3px;
+    background: var(--ink);
+    border-radius: 100px;
+    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+    z-index: 0;
+  }
+
+  .top-user { display: flex; align-items: center; gap: 10px; color: var(--ink-2); font-size: 13px; }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--moss) 0%, var(--moss-2) 100%);
+    color: var(--paper); font-weight: 600; font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-icon-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--ink-2);
+  }
+  .nav-icon-btn:hover { background: var(--paper-2); }
+
+  /* ==== LAYOUT ==== */
+  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 61px); }
+  .sidebar {
+    border-right: 1px solid var(--rule);
+    padding: 24px 16px;
+    background: var(--paper);
+  }
+  .side-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-4); font-weight: 500; padding: 0 10px 8px; }
+  .side-nav { display: flex; flex-direction: column; gap: 2px; margin-bottom: 24px; }
+  .side-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    color: var(--ink-2);
+    cursor: pointer;
+    font-size: 13px;
+    text-decoration: none;
+    border: none; background: transparent; width: 100%; text-align: left;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .side-item:hover { background: var(--paper-2); }
+  .side-item.active { background: var(--ink); color: var(--paper); }
+  .side-item svg { flex-shrink: 0; }
+
+  .main { padding: 36px 40px; max-width: 1280px; }
+
+  /* ==== PAGE HEADERS ==== */
+  .page-h {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 28px; padding-bottom: 20px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .page-h h1 { font-family: 'Fraunces', serif; font-weight: 400; font-size: 32px; letter-spacing: -0.02em; }
+  .page-h-sub { color: var(--ink-3); font-size: 13px; margin-top: 4px; }
+  .page-h-actions { display: flex; gap: 10px; }
+
+  /* ==== CARDS ==== */
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .card-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .card-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+  .card-sub { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+
+  /* ==== HERO BALANCE ==== */
+  .hero {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 10px;
+    padding: 32px 36px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .hero-rings {
+    position: absolute; right: -60px; top: -60px;
+    width: 320px; height: 320px;
+    opacity: 0.15; pointer-events: none;
+  }
+  .hero-rings div {
+    position: absolute; border: 1px solid var(--paper);
+    border-radius: 50%; inset: 0;
+  }
+  .hero-rings div:nth-child(2) { inset: 40px; }
+  .hero-rings div:nth-child(3) { inset: 80px; }
+  .hero-rings div:nth-child(4) { inset: 120px; }
+  .hero-label { font-size: 12px; color: rgba(246,243,236,0.6); letter-spacing: 0.08em; text-transform: uppercase; }
+  .hero-value { font-family: 'Fraunces', serif; font-size: 56px; font-weight: 300; letter-spacing: -0.03em; margin: 10px 0 4px; line-height: 1; }
+  .hero-sub { color: rgba(246,243,236,0.7); font-size: 13px; }
+  .hero-row { display: flex; justify-content: space-between; align-items: flex-end; }
+  .hero-stats { display: flex; gap: 32px; }
+  .hero-stat-label { font-size: 11px; color: rgba(246,243,236,0.6); letter-spacing: 0.06em; text-transform: uppercase; }
+  .hero-stat-value { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 400; margin-top: 4px; }
+
+  /* ==== STAT CARDS ==== */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 8px; padding: 18px 20px;
+  }
+  .stat-label { font-size: 12px; color: var(--ink-3); letter-spacing: 0.04em; }
+  .stat-value { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 400; margin: 6px 0 2px; letter-spacing: -0.01em; }
+  .stat-delta { font-size: 12px; color: var(--moss); }
+  .stat-delta.down { color: var(--danger); }
+
+  /* ==== GRID ==== */
+  .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 16px; }
+
+  /* ==== BUTTONS ==== */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 16px;
+    font-size: 13px; font-weight: 500;
+    background: var(--ink); color: var(--paper);
+    border: 1px solid var(--ink);
+    border-radius: 6px; cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--ink-2); }
+  .btn.ghost { background: transparent; color: var(--ink); }
+  .btn.ghost:hover { background: var(--paper-2); }
+  .btn.moss { background: var(--moss); border-color: var(--moss); }
+  .btn.moss:hover { background: var(--moss-2); }
+  .btn.sm { padding: 6px 12px; font-size: 12px; }
+  .btn.danger { background: var(--danger); border-color: var(--danger); }
+
+  /* ==== BADGES ==== */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 100px;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.02em;
+  }
+  .badge.ok { background: var(--ok-light); color: var(--ok); }
+  .badge.warn { background: var(--warn-light); color: var(--warn); }
+  .badge.danger { background: var(--danger-light); color: var(--danger); }
+  .badge.info { background: var(--info-light); color: var(--info); }
+  .badge.neutral { background: var(--paper-2); color: var(--ink-3); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .dot.ok { background: var(--ok); }
+  .dot.warn { background: var(--warn); }
+  .dot.danger { background: var(--danger); }
+  .dot.info { background: var(--info); }
+
+  /* ==== TABLES ==== */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 500; color: var(--ink-4); border-bottom: 1px solid var(--rule); letter-spacing: 0.06em; text-transform: uppercase; }
+  td { padding: 12px; border-bottom: 1px solid var(--rule); font-size: 13px; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr.clickable { cursor: pointer; }
+  tr.clickable:hover td { background: var(--paper-2); }
+  td.mono-cell { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .table-sm td { padding: 8px 12px; font-size: 12px; }
+
+  /* ==== FORMS ==== */
+  .form-row { margin-bottom: 18px; }
+  .label { font-size: 12px; font-weight: 500; color: var(--ink-2); display: block; margin-bottom: 6px; letter-spacing: 0.02em; }
+  input[type="text"], input[type="number"], input[type="email"], select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--rule-2);
+    border-radius: 6px;
+    background: var(--paper);
+    font-family: inherit; font-size: 13px;
+    color: var(--ink);
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--moss); box-shadow: 0 0 0 3px var(--moss-light); }
+  .tile-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .tile {
+    padding: 14px 16px;
+    border: 1px solid var(--rule-2);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    background: var(--paper);
+    transition: all 0.15s;
+  }
+  .tile:hover { border-color: var(--ink-3); background: var(--paper-2); }
+  .tile.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+  .tile-title { font-weight: 500; font-size: 13px; }
+  .tile-sub { font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+  .tile.active .tile-sub { color: rgba(246,243,236,0.7); }
+
+  /* Toggle switch */
+  .toggle {
+    position: relative; display: inline-block; width: 36px; height: 20px;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0; cursor: pointer;
+    background: var(--rule-2); border-radius: 100px;
+    transition: 0.2s;
+  }
+  .slider:before {
+    position: absolute; content: ''; height: 14px; width: 14px; left: 3px; top: 3px;
+    background: var(--paper); border-radius: 50%; transition: 0.2s;
+  }
+  input:checked + .slider { background: var(--moss); }
+  input:checked + .slider:before { transform: translateX(16px); }
+
+  /* ==== STEPPER ==== */
+  .stepper { display: flex; align-items: center; margin-bottom: 32px; }
+  .step { display: flex; align-items: center; gap: 10px; color: var(--ink-4); font-size: 13px; }
+  .step-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--paper-2); border: 1px solid var(--rule-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+  }
+  .step.active .step-num { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .step.active { color: var(--ink); font-weight: 500; }
+  .step.done .step-num { background: var(--moss); color: var(--paper); border-color: var(--moss); }
+  .step-sep { flex: 1; height: 1px; background: var(--rule); margin: 0 16px; }
+
+  /* ==== TABS ==== */
+  .tabs {
+    display: flex; gap: 2px; border-bottom: 1px solid var(--rule);
+    margin-bottom: 24px; overflow-x: auto;
+  }
+  .tab {
+    padding: 10px 16px;
+    border: none; background: transparent;
+    font-size: 13px; font-weight: 500; color: var(--ink-3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    font-family: inherit; white-space: nowrap;
+    margin-bottom: -1px;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+  /* ==== DEDUCTION CALLOUT ==== */
+  .callout {
+    background: var(--moss-light);
+    border-left: 3px solid var(--moss);
+    padding: 14px 18px;
+    border-radius: 4px;
+    margin: 12px 0;
+  }
+  .callout.warn { background: var(--warn-light); border-left-color: var(--warn); }
+  .callout.danger { background: var(--danger-light); border-left-color: var(--danger); }
+  .callout.info { background: var(--info-light); border-left-color: var(--info); }
+  .callout-title { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+  .callout-body { font-size: 12px; color: var(--ink-2); }
+
+  /* ==== MODAL ==== */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(26,26,23,0.5);
+    display: none; align-items: center; justify-content: center;
+    z-index: 200; backdrop-filter: blur(2px);
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: var(--paper); border-radius: 10px;
+    padding: 32px; max-width: 480px; width: 90%;
+    border: 1px solid var(--rule);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  }
+  .modal.wide { max-width: 720px; }
+  .modal h2 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 22px; margin-bottom: 12px; letter-spacing: -0.01em; }
+
+  /* ==== CONSOLE ==== */
+  .console {
+    background: var(--console-bg); color: var(--console-fg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px; line-height: 1.6;
+    padding: 20px; border-radius: 8px;
+    height: 420px; overflow-y: auto;
+  }
+  .console-line { margin-bottom: 2px; display: flex; gap: 10px; }
+  .console-time { color: var(--console-dim); flex-shrink: 0; }
+  .console-tag { flex-shrink: 0; }
+  .console-tag.ok { color: var(--console-ok); }
+  .console-tag.warn { color: var(--console-warn); }
+  .console-tag.err { color: var(--console-err); }
+  .console-tag.sys { color: var(--console-dim); }
+  .console-msg { flex: 1; }
+  .pulse-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--moss); display: inline-block;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* ==== CHART BOX ==== */
+  .chart-box { position: relative; height: 240px; }
+  .chart-box.tall { height: 320px; }
+  .chart-box.sm { height: 180px; }
+
+  /* Suggested next steps */
+  .next-step {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; border-radius: 6px;
+    background: var(--paper-2); margin-bottom: 8px;
+  }
+  .next-step-title { font-weight: 500; font-size: 13px; }
+  .next-step-sub { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+
+  /* Activity row */
+  .activity-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+  .activity-row:last-child { border-bottom: none; }
+  .activity-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--paper-2); display: flex; align-items: center; justify-content: center;
+    color: var(--ink-3); flex-shrink: 0;
+  }
+  .activity-detail { flex: 1; }
+  .activity-title { font-weight: 500; font-size: 13px; }
+  .activity-sub { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+  .activity-amt { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 500; }
+
+  /* Deadline list */
+  .deadline-row { display: grid; grid-template-columns: 90px 1fr auto; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--rule); }
+  .deadline-row:last-child { border-bottom: none; }
+  .deadline-date { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; color: var(--ink); line-height: 1; }
+  .deadline-date-sub { font-size: 10px; color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
+  .deadline-title { font-weight: 500; font-size: 13px; }
+  .deadline-sub { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+  .deadline-days { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+
+  /* Theme/Vehicle grid */
+  .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .theme-tile {
+    padding: 20px 16px;
+    border: 1px solid var(--rule-2);
+    border-radius: 8px;
+    cursor: pointer; text-align: center;
+    background: var(--paper);
+    transition: all 0.15s;
+  }
+  .theme-tile:hover { background: var(--paper-2); }
+  .theme-tile.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .theme-icon { font-size: 22px; margin-bottom: 10px; }
+  .theme-title { font-weight: 500; font-size: 13px; }
+  .theme-count { font-size: 11px; color: var(--ink-4); margin-top: 3px; }
+  .theme-tile.active .theme-count { color: rgba(246,243,236,0.7); }
+
+  /* Connector cards */
+  .connector-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .conn-card {
+    padding: 16px;
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    background: var(--paper);
+    position: relative;
+  }
+  .conn-logo {
+    width: 32px; height: 32px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif; font-weight: 500; font-size: 14px;
+    color: var(--ink); margin-bottom: 12px;
+  }
+  .conn-name { font-weight: 500; font-size: 13px; margin-bottom: 2px; }
+  .conn-sub { font-size: 11px; color: var(--ink-3); margin-bottom: 10px; }
+  .conn-status { position: absolute; top: 14px; right: 14px; }
+
+  /* State map / grid */
+  .state-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 4px;
+  }
+  .state-cell {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    position: relative;
+    font-size: 11px;
+    transition: all 0.15s;
+  }
+  .state-cell:hover { transform: scale(1.05); z-index: 1; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .state-cell.registered { background: var(--moss-light); border-color: var(--moss); color: var(--moss); font-weight: 600; }
+  .state-cell.due { background: var(--warn-light); border-color: var(--warn); color: var(--warn); font-weight: 600; }
+  .state-cell.overdue { background: var(--danger-light); border-color: var(--danger); color: var(--danger); font-weight: 600; }
+  .state-cell.exempt { background: var(--paper-2); color: var(--ink-4); border-style: dashed; }
+  .state-cell.unregistered { background: var(--paper); color: var(--ink-4); }
+
+  /* Filing calendar */
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2px;
+    margin: 20px 0;
+  }
+  .cal-month-cell {
+    aspect-ratio: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: var(--paper-2);
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--ink-3);
+    cursor: pointer;
+    position: relative;
+  }
+  .cal-month-cell.has-filings { background: var(--moss-light); color: var(--moss); }
+  .cal-month-cell.critical { background: var(--warn); color: var(--paper); }
+  .cal-month-cell.current { outline: 2px solid var(--ink); outline-offset: 2px; z-index: 1; }
+  .cal-count {
+    position: absolute; top: 2px; right: 3px;
+    font-size: 9px; opacity: 0.7;
+  }
+
+  /* Form row for compliance */
+  .filing-row {
+    display: grid; grid-template-columns: 120px 1fr 120px 100px 100px;
+    gap: 16px; align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .filing-row:hover { background: var(--paper-2); }
+  .filing-row:last-child { border-bottom: none; }
+  .filing-form { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
+  .filing-name { font-weight: 500; font-size: 13px; }
+  .filing-sub { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+  .filing-due { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-2); }
+
+  /* Progress bars */
+  .meter {
+    width: 100%; height: 6px;
+    background: var(--paper-3);
+    border-radius: 100px; overflow: hidden;
+  }
+  .meter-fill { height: 100%; background: var(--moss); border-radius: 100px; transition: width 0.3s; }
+  .meter-fill.warn { background: var(--warn); }
+  .meter-fill.danger { background: var(--danger); }
+
+  /* Compliance tabs sub-nav */
+  .compliance-sub {
+    display: flex; gap: 4px; margin-bottom: 24px;
+    background: var(--paper-2); padding: 4px; border-radius: 8px;
+    border: 1px solid var(--rule);
+  }
+  .compliance-sub-tab {
+    padding: 7px 14px; font-size: 12px; font-weight: 500;
+    color: var(--ink-3); background: transparent;
+    border: none; border-radius: 5px; cursor: pointer;
+    font-family: inherit; white-space: nowrap;
+  }
+  .compliance-sub-tab:hover { color: var(--ink); }
+  .compliance-sub-tab.active { background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+  /* Grantee verification badge */
+  .verify-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; color: var(--ink-3);
+    padding: 2px 7px; border-radius: 100px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+  }
+  .verify-badge.pub78 { background: var(--moss-light); color: var(--moss); border-color: var(--moss); }
+  .verify-badge.ofac-clear { background: var(--moss-light); color: var(--moss); border-color: var(--moss); }
+  .verify-badge.flagged { background: var(--danger-light); color: var(--danger); border-color: var(--danger); }
+
+  /* Section divider */
+  .section-h {
+    font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500;
+    margin: 32px 0 16px;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .section-h-sub { font-size: 12px; color: var(--ink-3); font-weight: 400; letter-spacing: 0.02em; font-family: 'Inter', sans-serif; }
+
+  /* ========== Hidden pages ========== */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ========== Responsive ========== */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 60px 1fr; }
+    .side-item span { display: none; }
+    .side-label { display: none; }
+    .main { padding: 24px 20px; }
+    .grid-2, .grid-3, .grid-1-2 { grid-template-columns: 1fr; }
+    .hero-value { font-size: 40px; }
+    .hero-stats { gap: 20px; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--paper); }
+  ::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 10px; border: 2px solid var(--paper); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink-4); }
+
+  /* Reports templates */
+  .report-tmpl {
+    padding: 16px; border: 1px solid var(--rule);
+    border-radius: 8px; background: var(--paper);
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .report-tmpl-left { display: flex; gap: 14px; align-items: center; }
+  .report-tmpl-icon {
+    width: 36px; height: 36px; border-radius: 6px;
+    background: var(--paper-2); border: 1px solid var(--rule);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif; font-weight: 500; font-size: 14px;
+  }
+  .report-tmpl-title { font-weight: 500; font-size: 13px; }
+  .report-tmpl-sub { color: var(--ink-3); font-size: 11px; margin-top: 2px; }
+
+  /* Compliance monitor rows */
+  .monitor-row {
+    padding: 16px 20px;
+    border: 1px solid var(--rule);
+    border-radius: 8px; margin-bottom: 10px;
+    background: var(--paper);
+    display: grid; grid-template-columns: auto 1fr auto; gap: 16px;
+    align-items: center;
+  }
+  .monitor-row.flagged { border-color: var(--danger); background: var(--danger-light); }
+  .monitor-row.warning { border-color: var(--warn); background: var(--warn-light); }
+  .monitor-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--moss-light); color: var(--moss);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .monitor-row.flagged .monitor-icon { background: var(--danger-light); color: var(--danger); }
+  .monitor-row.warning .monitor-icon { background: var(--warn-light); color: var(--warn); }
+  .monitor-title { font-weight: 500; font-size: 13px; }
+  .monitor-detail { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
+  .monitor-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-4); background: var(--paper); padding: 1px 6px; border-radius: 3px; border: 1px solid var(--rule); }
+
+  /* Legend */
+  .legend { display: flex; gap: 16px; font-size: 11px; color: var(--ink-3); margin-top: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ========== TOP BAR ========== -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div>
+      <div class="brand-name">Meridian</div>
+      <div class="brand-sub">Donor-Advised Fund Platform</div>
+    </div>
+  </div>
+  <div class="top-right">
+    <div class="role-switch">
+      <div class="role-switch-slider" id="role-slider"></div>
+      <button class="role-btn active" data-role="donor" onclick="setRole('donor')">Donor</button>
+      <button class="role-btn" data-role="admin" onclick="setRole('admin')">Sponsor Admin</button>
+    </div>
+    <button class="nav-icon-btn" title="Notifications">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+    </button>
+    <div class="top-user">
+      <div class="avatar" id="user-avatar">CF</div>
+      <span id="user-name">Chen Family Foundation</span>
+    </div>
+  </div>
+</header>
+
+<!-- ========== DONOR LAYOUT ========== -->
+<div class="layout" id="donor-layout">
+  <aside class="sidebar">
+    <div class="side-label">Overview</div>
+    <nav class="side-nav">
+      <button class="side-item active" data-donor-page="d-home" onclick="goDonor('d-home')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="side-item" data-donor-page="d-contribute" onclick="goDonor('d-contribute')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Contribute</span>
+      </button>
+      <button class="side-item" data-donor-page="d-grant" onclick="goDonor('d-grant')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        <span>Recommend Grants</span>
+      </button>
+      <button class="side-item" data-donor-page="d-invest" onclick="goDonor('d-invest')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>Investments</span>
+      </button>
+    </nav>
+    <div class="side-label">Reporting</div>
+    <nav class="side-nav">
+      <button class="side-item" data-donor-page="d-tax" onclick="goDonor('d-tax')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Tax Center</span>
+      </button>
+      <button class="side-item" data-donor-page="d-impact" onclick="goDonor('d-impact')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span>Impact</span>
+      </button>
+      <button class="side-item" data-donor-page="d-history" onclick="goDonor('d-history')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Activity</span>
+      </button>
+    </nav>
+    <div class="side-label">Account</div>
+    <nav class="side-nav">
+      <button class="side-item" data-donor-page="d-prefs" onclick="goDonor('d-prefs')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span>Preferences</span>
+      </button>
+    </nav>
+  </aside>
+  <main class="main" id="donor-main">
+    <!-- Donor pages populate here -->
+  </main>
+</div>
+
+<!-- ========== ADMIN LAYOUT ========== -->
+<div class="layout" id="admin-layout" style="display:none">
+  <aside class="sidebar">
+    <div class="side-label">Operations</div>
+    <nav class="side-nav">
+      <button class="side-item active" data-admin-page="a-home" onclick="goAdmin('a-home')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="side-item" data-admin-page="a-donors" onclick="goAdmin('a-donors')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        <span>Donors</span>
+      </button>
+      <button class="side-item" data-admin-page="a-agent" onclick="goAdmin('a-agent')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M9 15h6"/></svg>
+        <span>Agent Console</span>
+      </button>
+    </nav>
+
+    <div class="side-label">Compliance &amp; Reporting</div>
+    <nav class="side-nav">
+      <button class="side-item" data-admin-page="a-compliance" onclick="goAdmin('a-compliance')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <span>Compliance</span>
+      </button>
+      <button class="side-item" data-admin-page="a-reports" onclick="goAdmin('a-reports')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Reports</span>
+      </button>
+      <button class="side-item" data-admin-page="a-audit" onclick="goAdmin('a-audit')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>Audit &amp; Workpapers</span>
+      </button>
+    </nav>
+
+    <div class="side-label">Platform</div>
+    <nav class="side-nav">
+      <button class="side-item" data-admin-page="a-integrations" onclick="goAdmin('a-integrations')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>Integrations</span>
+      </button>
+      <button class="side-item" data-admin-page="a-crm" onclick="goAdmin('a-crm')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>CRM</span>
+      </button>
+      <button class="side-item" data-admin-page="a-thresholds" onclick="goAdmin('a-thresholds')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        <span>Thresholds</span>
+      </button>
+      <button class="side-item" data-admin-page="a-fees" onclick="goAdmin('a-fees')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        <span>Fees</span>
+      </button>
+    </nav>
+  </aside>
+  <main class="main" id="admin-main">
+    <!-- Admin pages populate here -->
+  </main>
+</div>
+
+<!-- ========== MODALS ========== -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal-inner"></div>
+</div>
+
+<script>
+// ============================================================================
+// DATA
+// ============================================================================
+const DATA = {
+  balance: 4827910,
+  granted_ltd: 3240000,
+  deducted_ltd: 8420000,
+  carryforward: 1240000,
+  contributions_ytd: 2150000,
+  grants_ytd: 487,
+  compliance_items: 3,
+
+  activity: [
+    { date: '2026-10-18', type: 'grant', title: 'Grant to Watershed Alliance of the Rockies', amount: -50000, sub: 'Climate · $50,000 unrestricted' },
+    { date: '2026-10-14', type: 'contribution', title: 'Contribution of NVDA shares', amount: 540000, sub: '1,000 shares · DTC 0164 Schwab' },
+    { date: '2026-10-10', type: 'investment', title: 'Allocation to Climate-Tech SPV II', amount: -250000, sub: '2.0% of balance · 24-month lockup' },
+    { date: '2026-10-04', type: 'grant', title: 'Grant to Rhode Island School of Design', amount: -25000, sub: 'Arts · unrestricted scholarship fund' },
+    { date: '2026-09-28', type: 'contribution', title: 'Wire transfer', amount: 100000, sub: 'JPM reference W-220940' },
+    { date: '2026-09-21', type: 'grant', title: 'Grant to Boys & Girls Clubs of Dallas', amount: -15000, sub: 'Education · program support' },
+    { date: '2026-09-18', type: 'dividend', title: 'Interest earned on Balanced Portfolio', amount: 8420, sub: 'Reinvested' },
+    { date: '2026-09-14', type: 'grant', title: 'Grant to Partners In Health', amount: -75000, sub: 'Health · international program (ED required)' },
+    { date: '2026-09-02', type: 'contribution', title: 'Contribution of TSLA shares', amount: 220000, sub: '600 shares · Fidelity DTC 0226' },
+  ],
+
+  themes: [
+    { id: 'climate', icon: '🌱', name: 'Climate', count: 42, color: '#2d4a3a' },
+    { id: 'education', icon: '📚', name: 'Education', count: 68, color: '#4a4a2d' },
+    { id: 'health', icon: '✚', name: 'Health', count: 51, color: '#4a2d2d' },
+    { id: 'arts', icon: '🎨', name: 'Arts & Culture', count: 23, color: '#4a3a2d' },
+    { id: 'housing', icon: '🏠', name: 'Housing', count: 19, color: '#2d3a4a' },
+    { id: 'civil', icon: '⚖', name: 'Civil Rights', count: 31, color: '#3a2d4a' },
+  ],
+
+  orgs: [
+    { ein: '93-1134164', name: 'Watershed Alliance of the Rockies', loc: 'Boulder, CO', nav: 94, theme: 'climate', intl: false },
+    { ein: '04-2103594', name: 'Project Drawdown', loc: 'Sausalito, CA', nav: 97, theme: 'climate', intl: false },
+    { ein: '27-1838074', name: 'Rainforest Trust', loc: 'Warrenton, VA', nav: 96, theme: 'climate', intl: true },
+    { ein: '13-5562162', name: 'The Nature Conservancy', loc: 'Arlington, VA', nav: 92, theme: 'climate', intl: true },
+    { ein: '94-3081368', name: 'Partners In Health', loc: 'Boston, MA', nav: 98, theme: 'health', intl: true },
+    { ein: '23-7069110', name: 'Doctors Without Borders USA', loc: 'New York, NY', nav: 93, theme: 'health', intl: true },
+  ],
+
+  investments: [
+    { name: 'Balanced Portfolio (60/40)', alloc: 42, perf1y: 11.4, bal: 2027722, type: 'Mutual fund' },
+    { name: 'Conservative Income', alloc: 18, perf1y: 4.8, bal: 869024, type: 'Bond fund' },
+    { name: 'Climate-Tech SPV II', alloc: 12, perf1y: 18.2, bal: 579349, type: 'SPV · 24mo lockup' },
+    { name: 'Impact Equity Index', alloc: 20, perf1y: 13.1, bal: 965582, type: 'ETF-like' },
+    { name: 'Bridge International Credit', alloc: 5, perf1y: 7.6, bal: 241395, type: 'Fund · 12mo' },
+    { name: 'Cash & Money Market', alloc: 3, perf1y: 4.9, bal: 144837, type: 'Cash equivalent' },
+  ],
+
+  // ---------- ADMIN DATA ----------
+  aum: 1420000000,
+  donors_total: 142,
+  grants_mtd: 487,
+  thematic_vehicles: 12,
+
+  topDonors: [
+    { name: 'Chen Family Foundation', balance: 4827910, mtd_grants: 115000, tier: 'Thematic', state: 'TX', advisor: 'K. Yang' },
+    { name: 'Whitfield Climate Initiative', balance: 62400000, mtd_grants: 3200000, tier: 'Thematic', state: 'NY', advisor: 'S. Patel' },
+    { name: 'Northern Lights Education Fund', balance: 54180000, mtd_grants: 1100000, tier: 'Thematic', state: 'MA', advisor: 'S. Patel' },
+    { name: 'Maverick Health Partners', balance: 51920000, mtd_grants: 820000, tier: 'Thematic', state: 'CA', advisor: 'J. Mendez' },
+    { name: 'Alvarez Giving Account', balance: 12840000, mtd_grants: 240000, tier: 'Premier', state: 'FL', advisor: 'K. Yang' },
+    { name: 'The Hollister Trust', balance: 9230000, mtd_grants: 180000, tier: 'Premier', state: 'IL', advisor: 'J. Mendez' },
+    { name: 'Reyes-Okonkwo DAF', balance: 2140000, mtd_grants: 42000, tier: 'Standard', state: 'TX', advisor: 'K. Yang' },
+    { name: 'The Barnard Foundation', balance: 7820000, mtd_grants: 95000, tier: 'Premier', state: 'NY', advisor: 'S. Patel' },
+  ],
+
+  // ---------- COMPLIANCE DATA ----------
+  federalFilings: [
+    { form: 'Form 990', name: 'Return of Organization Exempt From Income Tax', freq: 'Annual', due: '2027-05-15', status: 'in-progress', note: 'FY2026 — due 5½ months after year-end (12/31)' },
+    { form: 'Schedule D', name: 'Supplemental Financial Statements · DAF reporting', freq: 'Annual · with 990', due: '2027-05-15', status: 'in-progress', note: 'Part I: DAF aggregate value, contributions, grants' },
+    { form: 'Schedule F', name: 'Statement of Activities Outside the United States', freq: 'Annual · with 990', due: '2027-05-15', status: 'in-progress', note: 'Required: $100K+ in foreign grants or expenditure responsibility exercised' },
+    { form: 'Schedule I', name: 'Grants and Other Assistance to Organizations in the US', freq: 'Annual · with 990', due: '2027-05-15', status: 'in-progress', note: '487 grants YTD — threshold triggered' },
+    { form: 'Schedule L', name: 'Transactions with Interested Persons', freq: 'Annual · with 990', due: '2027-05-15', status: 'pending', note: 'Board loan screening required' },
+    { form: 'Schedule M', name: 'Noncash Contributions', freq: 'Annual · with 990', due: '2027-05-15', status: 'in-progress', note: '$47.2M noncash YTD across 23 asset classes' },
+    { form: 'Schedule R', name: 'Related Organizations and Unrelated Partnerships', freq: 'Annual · with 990', due: '2027-05-15', status: 'in-progress', note: '4 related LLCs (SPV vehicles)' },
+    { form: 'Schedule B', name: 'Schedule of Contributors', freq: 'Annual · with 990', due: '2027-05-15', status: 'in-progress', note: 'Confidential · not for public disclosure' },
+    { form: 'Form 990-T', name: 'Exempt Organization Business Income Tax Return (UBIT)', freq: 'Annual', due: '2027-05-15', status: 'review', note: 'Partnership K-1 UBTI from SPV II estimated $84K' },
+    { form: 'Form 8282', name: 'Donee Information Return', freq: 'Within 125 days of disposition', due: 'Rolling', status: 'ongoing', note: '14 filings YTD · triggered on 3-yr dispositions of noncash gifts > $500' },
+    { form: 'Form 8283 (Sect. B)', name: 'Noncash Charitable Contributions · donee acknowledgment', freq: 'As received', due: 'Rolling', status: 'ongoing', note: 'Counter-sign donor filings for gifts > $5,000' },
+    { form: 'Form 4720', name: 'Return of Certain Excise Taxes', freq: 'As triggered', due: 'With 990', status: 'none', note: 'Required if PPA §4966, §4967, §4958, §4943 violations occur' },
+    { form: 'Form 5227', name: 'Split-Interest Trust Information Return', freq: 'Annual', due: '2027-04-15', status: 'in-progress', note: '2 charitable remainder trusts in sponsor custody' },
+    { form: 'Form 8899', name: 'Notice of Income from Donated Intellectual Property', freq: 'Annual · 10-yr window', due: '2027-05-15', status: 'none', note: 'No qualifying IP currently held' },
+    { form: 'Form 1099-NEC / MISC', name: 'Nonemployee Compensation', freq: 'Annual', due: '2027-01-31', status: 'pending', note: '38 contractors on file' },
+    { form: 'Form W-2 / W-3', name: 'Wage and Tax Statements', freq: 'Annual', due: '2027-01-31', status: 'pending', note: '24 employees' },
+    { form: 'Form 941', name: 'Employer Quarterly Federal Tax Return', freq: 'Quarterly', due: '2026-10-31', status: 'due', note: 'Q3 2026 due in 11 days' },
+    { form: 'Form 940', name: 'Employer Annual FUTA', freq: 'Annual', due: '2027-01-31', status: 'pending', note: '' },
+    { form: 'FinCEN 114 (FBAR)', name: 'Report of Foreign Bank and Financial Accounts', freq: 'Annual', due: '2027-04-15', status: 'in-progress', note: 'EUR custody account in Luxembourg for intl grants' },
+    { form: 'Form 8938', name: 'Statement of Specified Foreign Financial Assets (FATCA)', freq: 'Annual · with 990', due: '2027-05-15', status: 'in-progress', note: 'Threshold triggered — paired with FBAR' },
+    { form: 'Form 8300', name: 'Report of Cash Payments Over $10,000', freq: '15 days of receipt', due: 'Rolling', status: 'ongoing', note: 'Rare for DAFs; last filed 2024' },
+    { form: 'Form 5500', name: 'Annual Return/Report of Employee Benefit Plan (ERISA)', freq: 'Annual', due: '2027-07-31', status: 'pending', note: '403(b) plan · 24 participants' },
+    { form: 'FinCEN BOI', name: 'Beneficial Ownership Information Report', freq: 'As changed', due: 'Rolling', status: 'exempt', note: '501(c)(3) sponsor exempt · SPV LLC subsidiaries filed Q2 2026' },
+  ],
+
+  // Alphabetical by abbreviation for the state registration table
+  stateFilings: [
+    { st: 'AL', state: 'Alabama', form: 'Form CR-01 (Charitable Reg.) + CR-02 renewal', agency: 'AG Consumer Protection', renew: '2026-11-15', status: 'due', fee: '$25', trigger: 'Solicits in-state' },
+    { st: 'AK', state: 'Alaska', form: 'Form 08-497 Charitable Organization Reg.', agency: 'Dept. of Law', renew: '2027-09-01', status: 'registered', fee: '$40', trigger: 'Solicits in-state' },
+    { st: 'AZ', state: 'Arizona', form: 'No annual registration (veteran-only rule)', agency: 'Secretary of State', renew: '—', status: 'exempt', fee: '—', trigger: 'Not a true registration state' },
+    { st: 'AR', state: 'Arkansas', form: 'Charitable Organization Registration', agency: 'AG', renew: '2027-05-15', status: 'registered', fee: '$0', trigger: 'Solicits' },
+    { st: 'CA', state: 'California', form: 'Form CT-1 (initial) + RRF-1 (annual) + CT-TR-1/990', agency: 'AG Registry of Charitable Trusts', renew: '2027-05-15', status: 'registered', fee: '$225 (sliding)', trigger: 'Hold or solicit in CA' },
+    { st: 'CO', state: 'Colorado', form: 'Charitable Solicitations Registration', agency: 'Secretary of State', renew: '2027-05-15', status: 'registered', fee: '$10', trigger: 'Solicits' },
+    { st: 'CT', state: 'Connecticut', form: 'Form CPC-54 Charitable Solicitation Reg.', agency: 'Dept. of Consumer Protection', renew: '2027-05-15', status: 'registered', fee: '$50', trigger: 'Receives > $50K' },
+    { st: 'DE', state: 'Delaware', form: 'Annual Franchise Tax Report (no sol. reg.)', agency: 'Division of Corporations', renew: '2027-03-01', status: 'registered', fee: '$25', trigger: 'DE-incorporated' },
+    { st: 'FL', state: 'Florida', form: 'Form CH-14 Solicitation of Contributions', agency: 'Dept. of Agriculture (FDACS)', renew: '2027-05-15', status: 'registered', fee: '$10-$400', trigger: 'Solicits' },
+    { st: 'GA', state: 'Georgia', form: 'Charitable Organization Registration', agency: 'Secretary of State', renew: '2027-05-15', status: 'registered', fee: '$35', trigger: 'Solicits' },
+    { st: 'HI', state: 'Hawaii', form: 'Charity Registration (TRACS)', agency: 'AG Tax &amp; Charities Div.', renew: '2027-05-15', status: 'registered', fee: '$0', trigger: 'Solicits' },
+    { st: 'ID', state: 'Idaho', form: 'No charitable registration required', agency: '—', renew: '—', status: 'exempt', fee: '—', trigger: 'Not required' },
+    { st: 'IL', state: 'Illinois', form: 'Form AG990-IL + Form CO-1/CO-2', agency: 'AG Charitable Trust Bureau', renew: '2027-06-30', status: 'registered', fee: '$15', trigger: 'Solicits or holds property' },
+    { st: 'IN', state: 'Indiana', form: 'No registration (IRS 501(c)(3) sufficient)', agency: '—', renew: '—', status: 'exempt', fee: '—', trigger: 'Not required' },
+    { st: 'IA', state: 'Iowa', form: 'No registration required', agency: '—', renew: '—', status: 'exempt', fee: '—', trigger: 'Not required' },
+    { st: 'KS', state: 'Kansas', form: 'Form SC53-A Charitable Reg.', agency: 'Secretary of State', renew: '2027-05-15', status: 'registered', fee: '$35', trigger: 'Solicits' },
+    { st: 'KY', state: 'Kentucky', form: 'Unified Registration Statement (URS)', agency: 'AG', renew: '2027-05-15', status: 'registered', fee: '$0', trigger: 'Solicits' },
+    { st: 'LA', state: 'Louisiana', form: 'Charitable Organization Reg.', agency: 'AG', renew: '2026-11-30', status: 'due', fee: '$25', trigger: 'Solicits' },
+    { st: 'ME', state: 'Maine', form: 'Charitable Solicitations Registration', agency: 'Prof. & Financial Reg.', renew: '2027-11-30', status: 'registered', fee: '$50', trigger: 'Solicits' },
+    { st: 'MD', state: 'Maryland', form: 'Form COR-92 / COF-85', agency: 'Secretary of State', renew: '2027-05-15', status: 'registered', fee: '$0-$300', trigger: 'Solicits > $25K' },
+    { st: 'MA', state: 'Massachusetts', form: 'Form PC + schedules A-2 / audit', agency: 'AG Non-Profit/Public Charities', renew: '2027-05-15', status: 'registered', fee: '$35-$2,000', trigger: 'Holds funds or solicits' },
+    { st: 'MI', state: 'Michigan', form: 'CTS-02 Charitable Solicitation Reg.', agency: 'AG', renew: '2027-05-15', status: 'registered', fee: '$0', trigger: 'Solicits > $25K' },
+    { st: 'MN', state: 'Minnesota', form: 'Charitable Organization Annual Report', agency: 'AG', renew: '2027-07-15', status: 'registered', fee: '$25', trigger: 'Solicits' },
+    { st: 'MS', state: 'Mississippi', form: 'Charitable Organization Registration', agency: 'Secretary of State', renew: '2027-05-15', status: 'registered', fee: '$50', trigger: 'Solicits' },
+    { st: 'MO', state: 'Missouri', form: 'Charitable Organization Registration', agency: 'AG', renew: '2027-02-28', status: 'registered', fee: '$15', trigger: 'Solicits' },
+    { st: 'MT', state: 'Montana', form: 'No charitable registration required', agency: '—', renew: '—', status: 'exempt', fee: '—', trigger: 'Not required' },
+    { st: 'NE', state: 'Nebraska', form: 'No registration required', agency: '—', renew: '—', status: 'exempt', fee: '—', trigger: 'Not required' },
+    { st: 'NV', state: 'Nevada', form: 'Charitable Solicitation Registration', agency: 'Secretary of State', renew: '2027-05-15', status: 'registered', fee: '$50', trigger: 'Solicits' },
+    { st: 'NH', state: 'New Hampshire', form: 'Form NHCT-11 (Charitable Trusts Unit)', agency: 'AG', renew: '2027-05-15', status: 'registered', fee: '$75', trigger: 'Holds property or solicits' },
+    { st: 'NJ', state: 'New Jersey', form: 'Form CRI-150I / CRI-200 / CRI-300R', agency: 'Div. Consumer Affairs', renew: '2027-05-15', status: 'registered', fee: '$30-$250', trigger: 'Solicits' },
+    { st: 'NM', state: 'New Mexico', form: 'Charitable Organization Reg. + Supplement', agency: 'AG', renew: '2027-05-15', status: 'registered', fee: '$0', trigger: 'Solicits' },
+    { st: 'NY', state: 'New York', form: 'Form CHAR500 + CHAR410 (initial) + audit', agency: 'AG Charities Bureau', renew: '2027-05-15', status: 'registered', fee: '$25-$1,500', trigger: 'Solicits or holds property > $25K' },
+    { st: 'NC', state: 'North Carolina', form: 'Charitable Solicitation Licensing', agency: 'Secretary of State', renew: '2027-05-15', status: 'registered', fee: '$50-$200', trigger: 'Solicits' },
+    { st: 'ND', state: 'North Dakota', form: 'Charitable Organization Reg.', agency: 'Secretary of State', renew: '2027-09-01', status: 'registered', fee: '$25', trigger: 'Solicits' },
+    { st: 'OH', state: 'Ohio', form: 'Charitable Organization Registration', agency: 'AG', renew: '2027-05-15', status: 'registered', fee: '$0-$200', trigger: 'Holds assets or solicits' },
+    { st: 'OK', state: 'Oklahoma', form: 'Charitable Organization Reg.', agency: 'Secretary of State', renew: '2027-05-15', status: 'registered', fee: '$15-$65', trigger: 'Solicits' },
+    { st: 'OR', state: 'Oregon', form: 'Form CT-12 Charitable Activities Section', agency: 'AG', renew: '2027-05-15', status: 'registered', fee: '$10-$200', trigger: 'Holds funds in OR' },
+    { st: 'PA', state: 'Pennsylvania', form: 'Form BCO-10 Charitable Organization Registration', agency: 'Dept. of State · BCCO', renew: '2027-05-15', status: 'registered', fee: '$15-$250', trigger: 'Solicits > $25K' },
+    { st: 'RI', state: 'Rhode Island', form: 'Charitable Organization Registration', agency: 'Dept. of Business Reg.', renew: '2027-05-15', status: 'registered', fee: '$90', trigger: 'Solicits' },
+    { st: 'SC', state: 'South Carolina', form: 'Form PCF Registration Statement', agency: 'Secretary of State', renew: '2026-10-31', status: 'overdue', fee: '$50', trigger: 'Solicits' },
+    { st: 'SD', state: 'South Dakota', form: 'No charitable registration required', agency: '—', renew: '—', status: 'exempt', fee: '—', trigger: 'Not required' },
+    { st: 'TN', state: 'Tennessee', form: 'Form SS-6001 Charitable Organization Reg.', agency: 'Secretary of State', renew: '2027-04-30', status: 'registered', fee: '$50', trigger: 'Solicits' },
+    { st: 'TX', state: 'Texas', form: 'No sol. reg. (nonprofit maint. w/ SOS Form 202)', agency: 'Secretary of State', renew: '2027-05-15', status: 'registered', fee: '$0', trigger: 'TX nonprofit entity' },
+    { st: 'UT', state: 'Utah', form: 'Charitable Organization Permit', agency: 'Div. Consumer Protection', renew: '2027-05-15', status: 'registered', fee: '$100', trigger: 'Solicits' },
+    { st: 'VT', state: 'Vermont', form: 'No registration unless paid solicitor', agency: '—', renew: '—', status: 'exempt', fee: '—', trigger: 'Not required for sponsor' },
+    { st: 'VA', state: 'Virginia', form: 'Form 102 Charitable Solicitation Reg.', agency: 'VDACS', renew: '2027-05-15', status: 'registered', fee: '$30-$325', trigger: 'Solicits' },
+    { st: 'WA', state: 'Washington', form: 'Charitable Solicitation Registration', agency: 'Secretary of State', renew: '2027-05-31', status: 'registered', fee: '$60', trigger: 'Solicits' },
+    { st: 'WV', state: 'West Virginia', form: 'Charitable Organization Registration', agency: 'Secretary of State', renew: '2027-05-15', status: 'registered', fee: '$15-$50', trigger: 'Solicits' },
+    { st: 'WI', state: 'Wisconsin', form: 'Form 1943 Charitable Organization Annual Report', agency: 'DFI', renew: '2027-07-31', status: 'registered', fee: '$54', trigger: 'Solicits' },
+    { st: 'WY', state: 'Wyoming', form: 'No charitable registration required', agency: '—', renew: '—', status: 'exempt', fee: '—', trigger: 'Not required' },
+    { st: 'DC', state: 'District of Columbia', form: 'Basic Business License (Charitable Sol.)', agency: 'DCRA/DLCP', renew: '2027-02-28', status: 'registered', fee: '$80-$412', trigger: 'Solicits' },
+  ],
+
+  // PPA 2006 (§4966, §4967, §4958, §4943) monitors
+  ppaMonitors: [
+    { code: '§4966', title: 'Taxable Distributions', detail: '14 grants reviewed this quarter · 0 flagged as going to non-public-charities or individuals. 20% excise tax on sponsor + 5% on fund manager if any proceed.', status: 'ok', count: 487 },
+    { code: '§4967', title: 'Prohibited Benefits to Donor/Advisor', detail: 'Automated screening against donor family roster, controlled entities, and quid-pro-quo terms. 125% excise tax if advisor obtains more-than-incidental benefit.', status: 'ok', count: 487 },
+    { code: '§4958', title: 'Excess Benefit Transactions', detail: 'Board compensation review flags any disqualified-person transaction. 25% initial / 200% second-tier excise.', status: 'ok', count: 24 },
+    { code: '§4943', title: 'Excess Business Holdings', detail: '2 DAF accounts hold concentrated single-issuer positions. Both within 5-yr disposition window post-contribution.', status: 'warn', count: 2 },
+    { code: '§170(f)(18)', title: 'Donor Written Agreement (contribution)', detail: 'Required at every intake: donor consents to sponsor exclusive legal control.', status: 'ok', count: 2150000 },
+    { code: 'Pub. 526', title: 'Deductibility limit tracking', detail: 'Monitors donor AGI percentage limits (60%/50%/30%/20%) + 5-yr carryforward schedule per donor.', status: 'ok', count: 142 },
+  ],
+
+  // International grants requiring equivalency determination or expenditure responsibility
+  intlGrants: [
+    { grantee: 'Fundación Rainforest Ecuador', country: 'Ecuador', amount: 125000, method: 'ED', status: 'ok', ofac: 'clear', agent: 'NGOsource', valid: '2027-04-15' },
+    { grantee: 'Partners In Health · Lesotho', country: 'Lesotho', amount: 75000, method: 'ER', status: 'ok', ofac: 'clear', agent: 'Expenditure Resp. file', valid: '2027-01-31' },
+    { grantee: 'Khan Academy Latin America', country: 'Brazil', amount: 50000, method: 'ED', status: 'ok', ofac: 'clear', agent: 'NGOsource', valid: '2028-02-10' },
+    { grantee: 'Afghan Girls Financial Assistance Fund', country: 'Afghanistan', amount: 20000, method: 'ER', status: 'review', ofac: 'enhanced', agent: 'Manual · OFAC enhanced due diligence', valid: 'In progress' },
+    { grantee: 'Médecins du Monde', country: 'France', amount: 100000, method: 'ED', status: 'ok', ofac: 'clear', agent: 'NGOsource', valid: '2027-11-30' },
+    { grantee: 'Fundación Educar Chile', country: 'Chile', amount: 45000, method: 'ED', status: 'ok', ofac: 'clear', agent: 'NGOsource', valid: '2027-08-20' },
+  ],
+};
+
+// Donor directory for admin donors page
+const DONOR_DIRECTORY = [
+  ...DATA.topDonors,
+  { name: 'Trinity Oaks Foundation', balance: 1920000, mtd_grants: 32000, tier: 'Premier', state: 'TX', advisor: 'K. Yang' },
+  { name: 'Patel Family DAF', balance: 540000, mtd_grants: 12000, tier: 'Standard', state: 'NJ', advisor: 'S. Patel' },
+  { name: 'The Lawrence Giving Circle', balance: 320000, mtd_grants: 8000, tier: 'Standard', state: 'MA', advisor: 'J. Mendez' },
+  { name: 'Wu Family Charitable Account', balance: 185000, mtd_grants: 4500, tier: 'Standard', state: 'CA', advisor: 'K. Yang' },
+  { name: 'Greenline Civil Rights Fund', balance: 48200000, mtd_grants: 950000, tier: 'Thematic', state: 'DC', advisor: 'J. Mendez' },
+];
+
+// ============================================================================
+// ROLE / NAV
+// ============================================================================
+let currentRole = 'donor';
+let currentDonorPage = 'd-home';
+let currentAdminPage = 'a-home';
+let currentComplianceTab = 'overview';
+let chartInstances = {};
+let agentLogTimer = null;
+
+function setRole(role) {
+  currentRole = role;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.toggle('active', b.dataset.role === role));
+  document.getElementById('donor-layout').style.display = role === 'donor' ? 'grid' : 'none';
+  document.getElementById('admin-layout').style.display = role === 'admin' ? 'grid' : 'none';
+  moveSlider(role);
+
+  if (role === 'donor') {
+    document.getElementById('user-name').textContent = 'Chen Family Foundation';
+    document.getElementById('user-avatar').textContent = 'CF';
+    goDonor(currentDonorPage);
+  } else {
+    document.getElementById('user-name').textContent = 'Harlyn M. · Operations';
+    document.getElementById('user-avatar').textContent = 'HM';
+    goAdmin(currentAdminPage);
+  }
+  destroyCharts();
+}
+
+function moveSlider(role) {
+  const slider = document.getElementById('role-slider');
+  const activeBtn = document.querySelector(`.role-btn[data-role="${role}"]`);
+  slider.style.left = activeBtn.offsetLeft + 'px';
+  slider.style.width = activeBtn.offsetWidth + 'px';
+}
+
+function destroyCharts() {
+  Object.values(chartInstances).forEach(c => c && c.destroy && c.destroy());
+  chartInstances = {};
+  if (agentLogTimer) { clearInterval(agentLogTimer); agentLogTimer = null; }
+}
+
+function goDonor(page) {
+  currentDonorPage = page;
+  document.querySelectorAll('[data-donor-page]').forEach(b => b.classList.toggle('active', b.dataset.donorPage === page));
+  destroyCharts();
+  const el = document.getElementById('donor-main');
+  el.innerHTML = DonorPages[page]();
+  if (DonorInits[page]) DonorInits[page]();
+}
+
+function goAdmin(page) {
+  currentAdminPage = page;
+  document.querySelectorAll('[data-admin-page]').forEach(b => b.classList.toggle('active', b.dataset.adminPage === page));
+  destroyCharts();
+  const el = document.getElementById('admin-main');
+  el.innerHTML = AdminPages[page]();
+  if (AdminInits[page]) AdminInits[page]();
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+const fmt = n => '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+const fmtFull = n => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtPct = n => (n > 0 ? '+' : '') + n.toFixed(1) + '%';
+const fmtDate = d => new Date(d + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const fmtDateShort = d => new Date(d + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+const daysUntil = d => { const t = new Date(d + 'T00:00') - new Date('2026-10-20'); return Math.ceil(t / 86400000); };
+
+const chartTheme = {
+  grid: 'rgba(26,26,23,0.06)',
+  text: '#6b6b63',
+  moss: '#2d4a3a',
+  moss2: '#3f6b55',
+  mossLight: 'rgba(45,74,58,0.15)',
+  ink: '#1a1a17',
+  paper: '#f6f3ec',
+  warn: '#a85d2a',
+  info: '#2d4a5a',
+};
+
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = chartTheme.text;
+Chart.defaults.borderColor = chartTheme.grid;
+
+function showModal(html) {
+  document.getElementById('modal-inner').innerHTML = html;
+  document.getElementById('modal-bg').classList.add('show');
+}
+function hideModal() { document.getElementById('modal-bg').classList.remove('show'); }
+document.getElementById('modal-bg').addEventListener('click', e => { if (e.target.id === 'modal-bg') hideModal(); });
+
+function activityIcon(t) {
+  const icons = {
+    grant: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+    contribution: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>',
+    investment: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+    dividend: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+  };
+  return icons[t] || icons.grant;
+}
+
+// ============================================================================
+// DONOR PAGES
+// ============================================================================
+const DonorPages = {};
+const DonorInits = {};
+
+// ---------- DONOR: HOME ----------
+DonorPages['d-home'] = () => `
+  <div class="page-h">
+    <div>
+      <h1>Welcome back, Linda</h1>
+      <div class="page-h-sub">Your giving at a glance · as of ${fmtDate('2026-10-20')}</div>
+    </div>
+    <div class="page-h-actions">
+      <button class="btn ghost" onclick="goDonor('d-history')">Statements</button>
+      <button class="btn" onclick="goDonor('d-contribute')">+ Contribute</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-rings"><div></div><div></div><div></div><div></div></div>
+    <div class="hero-label">Giving account balance</div>
+    <div class="hero-value">${fmt(DATA.balance)}</div>
+    <div class="hero-sub">Chen Family Foundation · Thematic Vehicle · opened 2019</div>
+    <div class="hero-row" style="margin-top:28px">
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-label">YTD Granted</div>
+          <div class="hero-stat-value">${fmt(DATA.granted_ltd)}</div>
+        </div>
+        <div>
+          <div class="hero-stat-label">YTD Contributions</div>
+          <div class="hero-stat-value">${fmt(DATA.contributions_ytd)}</div>
+        </div>
+        <div>
+          <div class="hero-stat-label">Lifetime Deducted</div>
+          <div class="hero-stat-value">${fmt(DATA.deducted_ltd)}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-h">
+        <div><div class="card-title">Balance over time</div><div class="card-sub">Trailing 12 months</div></div>
+        <select style="width:auto; padding:5px 10px; font-size:12px"><option>12 months</option><option>24 months</option><option>All time</option></select>
+      </div>
+      <div class="chart-box tall"><canvas id="balance-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-title">Allocation</div></div>
+      <div class="chart-box"><canvas id="alloc-chart"></canvas></div>
+      <div style="margin-top:12px; font-size:12px; color:var(--ink-3)">
+        <div style="display:flex; justify-content:space-between; padding:4px 0"><span>Balanced 60/40</span><span class="mono">42%</span></div>
+        <div style="display:flex; justify-content:space-between; padding:4px 0"><span>Impact Equity</span><span class="mono">20%</span></div>
+        <div style="display:flex; justify-content:space-between; padding:4px 0"><span>Conservative Income</span><span class="mono">18%</span></div>
+        <div style="display:flex; justify-content:space-between; padding:4px 0"><span>Climate-Tech SPV II</span><span class="mono">12%</span></div>
+        <div style="display:flex; justify-content:space-between; padding:4px 0"><span>Other</span><span class="mono">8%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-h"><div class="card-title">Recent activity</div><a class="btn ghost sm" onclick="goDonor('d-history')">View all</a></div>
+      ${DATA.activity.slice(0, 5).map(a => `
+        <div class="activity-row">
+          <div class="activity-icon">${activityIcon(a.type)}</div>
+          <div class="activity-detail">
+            <div class="activity-title">${a.title}</div>
+            <div class="activity-sub">${fmtDate(a.date)} · ${a.sub}</div>
+          </div>
+          <div class="activity-amt" style="color:${a.amount >= 0 ? 'var(--moss)' : 'var(--ink)'}">${a.amount >= 0 ? '+' : ''}${fmt(a.amount)}</div>
+        </div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-title">Suggested next steps</div></div>
+      <div class="next-step">
+        <div>
+          <div class="next-step-title">Deduct Q4 contributions</div>
+          <div class="next-step-sub">Contribute by Dec 31 to deduct in 2026 tax year</div>
+        </div>
+        <button class="btn sm" onclick="goDonor('d-contribute')">Start</button>
+      </div>
+      <div class="next-step">
+        <div>
+          <div class="next-step-title">Review quarterly impact</div>
+          <div class="next-step-sub">15 grantees reported outcomes in Q3</div>
+        </div>
+        <button class="btn ghost sm" onclick="goDonor('d-impact')">Open</button>
+      </div>
+      <div class="next-step">
+        <div>
+          <div class="next-step-title">Add successor advisor</div>
+          <div class="next-step-sub">Designate who manages this DAF after your lifetime</div>
+        </div>
+        <button class="btn ghost sm" onclick="goDonor('d-prefs')">Setup</button>
+      </div>
+    </div>
+  </div>
+`;
+
+DonorInits['d-home'] = () => {
+  const months = ['Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'];
+  const values = [3920000, 4080000, 4210000, 4180000, 4320000, 4400000, 4510000, 4480000, 4620000, 4700000, 4780000, 4827910];
+  chartInstances.balance = new Chart(document.getElementById('balance-chart'), {
+    type: 'line',
+    data: { labels: months, datasets: [{
+      data: values, borderColor: chartTheme.moss, backgroundColor: chartTheme.mossLight,
+      fill: true, tension: 0.35, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmt(c.raw) } } },
+      scales: {
+        y: { ticks: { callback: v => '$' + (v/1000000).toFixed(1) + 'M' }, grid: { color: chartTheme.grid } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+  chartInstances.alloc = new Chart(document.getElementById('alloc-chart'), {
+    type: 'doughnut',
+    data: { labels: ['Balanced','Impact Equity','Conservative','Climate SPV','Other'],
+      datasets: [{ data: [42,20,18,12,8],
+        backgroundColor: ['#2d4a3a','#3f6b55','#5a8871','#7a9f82','#b1c7b8'], borderWidth: 0 }]},
+    options: { responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: { legend: { display: false } } }
+  });
+};
+
+// ---------- DONOR: CONTRIBUTE ----------
+let contribState = { step: 1, assetType: 'stocks', ticker: 'NVDA', shares: 1000, price: 540, basis: 180000, custodian: 'schwab', dtc: '0164', longTerm: true };
+
+DonorPages['d-contribute'] = () => `
+  <div class="page-h">
+    <div><h1>Contribute to your DAF</h1>
+      <div class="page-h-sub">Immediate tax deduction · funds grow tax-free · recommend grants on your timeline</div></div>
+  </div>
+
+  <div class="stepper">
+    ${['Choose asset','Source account','Review deduction','Confirm'].map((s,i) => `
+      <div class="step ${i+1 === contribState.step ? 'active' : (i+1 < contribState.step ? 'done' : '')}">
+        <div class="step-num">${i+1 < contribState.step ? '✓' : i+1}</div><span>${s}</span>
+      </div>${i < 3 ? '<div class="step-sep"></div>' : ''}`).join('')}
+  </div>
+
+  <div id="contrib-step-body"></div>
+`;
+
+DonorInits['d-contribute'] = () => renderContribStep();
+
+function renderContribStep() {
+  const el = document.getElementById('contrib-step-body');
+  const s = contribState;
+  if (s.step === 1) {
+    el.innerHTML = `
+      <div class="card" style="max-width:720px">
+        <div class="card-title" style="margin-bottom:16px">What are you contributing?</div>
+        <div class="tile-group" style="margin-bottom:20px">
+          ${[
+            { id:'stocks', title:'Public stock', sub:'Appreciated shares · fastest tax savings' },
+            { id:'bonds', title:'Bonds / Treasuries', sub:'Fixed-income securities' },
+            { id:'etfs', title:'ETFs / Mutual funds', sub:'Index and sector funds' },
+            { id:'wire', title:'Wire / cash', sub:'ACH, wire, or check' },
+            { id:'crypto', title:'Cryptocurrency', sub:'BTC, ETH, select stablecoins' },
+            { id:'private', title:'Private securities', sub:'C-corp, LP interests · qualified appraisal req.' },
+          ].map(t => `
+            <button class="tile ${s.assetType === t.id ? 'active' : ''}" onclick="contribState.assetType='${t.id}'; renderContribStep()">
+              <div class="tile-title">${t.title}</div>
+              <div class="tile-sub">${t.sub}</div>
+            </button>`).join('')}
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:24px">
+          <button class="btn" onclick="contribState.step=2; renderContribStep()">Next: Source account →</button>
+        </div>
+      </div>`;
+  } else if (s.step === 2) {
+    el.innerHTML = `
+      <div class="card" style="max-width:720px">
+        <div class="card-title" style="margin-bottom:16px">Where is it held?</div>
+        <div class="form-row">
+          <label class="label">Custodian / broker</label>
+          <select onchange="contribState.custodian=this.value; contribState.dtc={schwab:'0164',fidelity:'0226',goldman:'0005',ms:'0015',jpm:'0902'}[this.value]">
+            <option value="schwab" ${s.custodian==='schwab'?'selected':''}>Charles Schwab · DTC 0164</option>
+            <option value="fidelity" ${s.custodian==='fidelity'?'selected':''}>Fidelity · DTC 0226</option>
+            <option value="goldman" ${s.custodian==='goldman'?'selected':''}>Goldman Sachs · DTC 0005</option>
+            <option value="ms" ${s.custodian==='ms'?'selected':''}>Morgan Stanley · DTC 0015</option>
+            <option value="jpm" ${s.custodian==='jpm'?'selected':''}>JPMorgan · DTC 0902</option>
+          </select>
+        </div>
+        <div class="grid-3" style="margin-bottom:0">
+          <div class="form-row"><label class="label">Ticker</label>
+            <input type="text" value="${s.ticker}" onchange="contribState.ticker=this.value.toUpperCase(); renderContribStep()" />
+          </div>
+          <div class="form-row"><label class="label">Shares</label>
+            <input type="number" value="${s.shares}" onchange="contribState.shares=+this.value; renderContribStep()" />
+          </div>
+          <div class="form-row"><label class="label">Cost basis</label>
+            <input type="number" value="${s.basis}" onchange="contribState.basis=+this.value; renderContribStep()" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="label">Acquisition date (for holding-period rule)</label>
+          <input type="text" value="2022-03-15 · held 4 years" readonly style="background:var(--paper-2)" />
+        </div>
+        <div class="callout">
+          <div class="callout-title">✓ Long-term holding confirmed</div>
+          <div class="callout-body">Shares held > 1 year. You can deduct the full fair market value and avoid capital gains tax on $${(s.shares * s.price - s.basis).toLocaleString()} of appreciation.</div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:24px">
+          <button class="btn ghost" onclick="contribState.step=1; renderContribStep()">← Back</button>
+          <button class="btn" onclick="contribState.step=3; renderContribStep()">Next: Review deduction →</button>
+        </div>
+      </div>`;
+  } else if (s.step === 3) {
+    const fmv = s.shares * s.price;
+    const gain = fmv - s.basis;
+    const taxSaved = Math.round(gain * 0.238 + fmv * 0.37);
+    el.innerHTML = `
+      <div class="grid-2" style="max-width:980px">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">Deduction summary</div>
+          <table class="table-sm">
+            <tr><td style="color:var(--ink-3)">Fair market value</td><td style="text-align:right"><strong>${fmt(fmv)}</strong></td></tr>
+            <tr><td style="color:var(--ink-3)">Cost basis</td><td style="text-align:right">${fmt(s.basis)}</td></tr>
+            <tr><td style="color:var(--ink-3)">Unrealized gain</td><td style="text-align:right">${fmt(gain)}</td></tr>
+            <tr><td style="color:var(--ink-3)">Capital gains tax avoided</td><td style="text-align:right; color:var(--moss)"><strong>${fmt(Math.round(gain * 0.238))}</strong></td></tr>
+            <tr><td style="color:var(--ink-3)">Charitable deduction (at FMV)</td><td style="text-align:right"><strong>${fmt(fmv)}</strong></td></tr>
+            <tr><td style="color:var(--ink-3)">Est. income tax savings (37% bracket)</td><td style="text-align:right; color:var(--moss)"><strong>${fmt(Math.round(fmv * 0.37))}</strong></td></tr>
+            <tr style="border-top:2px solid var(--ink)"><td><strong>Total tax savings</strong></td><td style="text-align:right; font-family:'Fraunces',serif; font-size:22px; font-weight:500; color:var(--moss)">${fmt(taxSaved)}</td></tr>
+          </table>
+        </div>
+        <div class="card" style="background:var(--moss-light); border-color:var(--moss)">
+          <div class="card-title" style="color:var(--moss); margin-bottom:12px">AGI deductibility limits (IRS Pub. 526)</div>
+          <table class="table-sm">
+            <tr><td>Long-term appreciated securities</td><td class="mono-cell" style="text-align:right">30% of AGI</td></tr>
+            <tr><td>Short-term holdings (&lt;1yr)</td><td class="mono-cell" style="text-align:right">50% of AGI · basis only</td></tr>
+            <tr><td>Cash contributions</td><td class="mono-cell" style="text-align:right">60% of AGI</td></tr>
+            <tr><td>Private securities</td><td class="mono-cell" style="text-align:right">30% of AGI · basis</td></tr>
+          </table>
+          <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--rule); font-size:12px; color:var(--ink-3)">
+            Unused deductions carry forward 5 tax years. Form 8283 Section B required (sponsor countersign) for noncash > $5,000. Qualified appraisal required for noncash > $5,000 (except publicly traded securities).
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-top:24px; max-width:980px">
+        <button class="btn ghost" onclick="contribState.step=2; renderContribStep()">← Back</button>
+        <button class="btn" onclick="contribState.step=4; renderContribStep()">Next: Confirm →</button>
+      </div>`;
+  } else if (s.step === 4) {
+    el.innerHTML = `
+      <div class="card" style="max-width:560px; margin:0 auto; text-align:center">
+        <div style="font-size:40px; margin-bottom:12px">⚡</div>
+        <div class="card-title" style="margin-bottom:8px">Confirm contribution</div>
+        <div style="color:var(--ink-3); font-size:13px; margin-bottom:20px">We'll initiate DTC transfer from ${s.custodian.toUpperCase()} ${s.dtc} on your behalf. Settlement in 1–3 business days.</div>
+        <div style="background:var(--paper-2); padding:16px; border-radius:6px; margin-bottom:20px; text-align:left">
+          <div style="display:flex; justify-content:space-between; padding:4px 0"><span>${s.shares} shares ${s.ticker}</span><span class="mono">${fmt(s.shares*s.price)}</span></div>
+          <div style="display:flex; justify-content:space-between; padding:4px 0; color:var(--ink-3); font-size:12px"><span>Deduction value (FMV)</span><span>${fmt(s.shares*s.price)}</span></div>
+          <div style="display:flex; justify-content:space-between; padding:4px 0; color:var(--ink-3); font-size:12px"><span>Holding</span><span>Long-term (&gt; 1 year)</span></div>
+        </div>
+        <div style="display:flex; gap:10px; justify-content:center">
+          <button class="btn ghost" onclick="contribState.step=3; renderContribStep()">← Back</button>
+          <button class="btn moss" onclick="submitContribution()">Confirm contribution</button>
+        </div>
+      </div>`;
+  }
+}
+
+function submitContribution() {
+  const ref = 'MER-' + Math.floor(10000 + Math.random() * 90000);
+  showModal(`
+    <div style="text-align:center">
+      <div style="width:60px;height:60px;border-radius:50%;background:var(--moss);color:var(--paper);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:28px">✓</div>
+      <h2>Contribution received</h2>
+      <p style="color:var(--ink-3); margin-bottom:20px">DTC transfer initiated. Reference <span class="mono" style="background:var(--paper-2); padding:2px 8px; border-radius:3px">${ref}</span>. Form 8283 Section B acknowledgment will be sent to you within 48 hours.</p>
+      <button class="btn" onclick="hideModal(); contribState={step:1,assetType:'stocks',ticker:'NVDA',shares:1000,price:540,basis:180000,custodian:'schwab',dtc:'0164',longTerm:true}; goDonor('d-home')">Back to dashboard</button>
+    </div>
+  `);
+}
+
+// ---------- DONOR: GRANT ----------
+let grantState = { theme: 'climate', org: null, amount: 10000, source: 'cash', freq: 'once', ack: 'full', memo: '' };
+
+DonorPages['d-grant'] = () => `
+  <div class="page-h">
+    <div><h1>Recommend a grant</h1>
+      <div class="page-h-sub">Advisory recommendation to the sponsor · subject to IRS and OFAC review</div></div>
+  </div>
+
+  <div class="section-h">1. Thematic area <span class="section-h-sub">Vetted causes aligned to your giving pattern</span></div>
+  <div class="theme-grid" style="margin-bottom:24px">
+    ${DATA.themes.map(t => `
+      <button class="theme-tile ${grantState.theme === t.id ? 'active' : ''}" onclick="grantState.theme='${t.id}'; grantState.org=null; goDonor('d-grant')">
+        <div class="theme-icon">${t.icon}</div>
+        <div class="theme-title">${t.name}</div>
+        <div class="theme-count">${t.count} vetted orgs</div>
+      </button>`).join('')}
+  </div>
+
+  <div class="section-h">2. Organization <span class="section-h-sub">All grantees confirmed on IRS Pub. 78 and screened against OFAC SDN</span></div>
+  <div class="card" style="margin-bottom:24px">
+    <table>
+      <thead><tr><th>Organization</th><th>EIN</th><th>Location</th><th>Verification</th><th></th></tr></thead>
+      <tbody>
+        ${DATA.orgs.filter(o => o.theme === grantState.theme).map(o => `
+          <tr class="clickable" onclick="grantState.org='${o.ein}'; goDonor('d-grant')" style="${grantState.org===o.ein?'background:var(--moss-light)':''}">
+            <td><strong>${o.name}</strong></td>
+            <td class="mono-cell">${o.ein}</td>
+            <td>${o.loc}</td>
+            <td>
+              <span class="verify-badge pub78">Pub. 78</span>
+              <span class="verify-badge ofac-clear">OFAC</span>
+              ${o.intl ? '<span class="verify-badge">Intl · ED</span>' : ''}
+              <span class="verify-badge">Nav ${o.nav}</span>
+            </td>
+            <td><button class="btn sm ghost">Select →</button></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  ${grantState.org ? `
+    <div class="section-h">3. Grant details</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="grid-3">
+          <div class="form-row"><label class="label">Amount</label>
+            <input type="number" value="${grantState.amount}" onchange="grantState.amount=+this.value" min="100" />
+          </div>
+          <div class="form-row"><label class="label">Source</label>
+            <select><option>Cash balance</option><option>Climate-Tech SPV II (liquidate)</option></select>
+          </div>
+          <div class="form-row"><label class="label">Frequency</label>
+            <select><option>One time</option><option>Monthly · 12 months</option><option>Quarterly · ongoing</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="label">Acknowledgment</label>
+          <select><option>Full acknowledgment (Chen Family Foundation)</option><option>Anonymous</option><option>Only to grantee, not public</option></select>
+        </div>
+        <div class="form-row">
+          <label class="label">Memo (optional)</label>
+          <textarea rows="2" placeholder="Program-specific designation, honoree, or notes to grantee"></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">Grant preview</div>
+        <table class="table-sm">
+          <tr><td style="color:var(--ink-3)">Amount</td><td style="text-align:right"><strong>${fmt(grantState.amount)}</strong></td></tr>
+          <tr><td style="color:var(--ink-3)">After grant balance</td><td style="text-align:right">${fmt(DATA.balance - grantState.amount)}</td></tr>
+          <tr><td style="color:var(--ink-3)">Processing time</td><td style="text-align:right">2–5 business days</td></tr>
+          <tr><td style="color:var(--ink-3)">Grantee notification</td><td style="text-align:right">On ACH settlement</td></tr>
+        </table>
+        <div class="callout" style="margin-top:16px">
+          <div class="callout-title">Compliance checks</div>
+          <div class="callout-body">
+            ✓ IRS Pub. 78 · public charity status<br/>
+            ✓ OFAC SDN clear · screened ${fmtDate('2026-10-20')}<br/>
+            ✓ PPA §4966 · no taxable distribution<br/>
+            ✓ PPA §4967 · no donor benefit flagged
+          </div>
+        </div>
+        <button class="btn moss" style="width:100%; justify-content:center; margin-top:16px" onclick="sendGrant()">Recommend grant to sponsor</button>
+      </div>
+    </div>` : `
+    <div class="callout info"><div class="callout-body">Select an organization above to configure the grant.</div></div>
+  `}
+`;
+
+function sendGrant() {
+  showModal(`
+    <div style="text-align:center">
+      <div style="width:60px;height:60px;border-radius:50%;background:var(--moss);color:var(--paper);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:28px">✓</div>
+      <h2>Grant recommendation sent</h2>
+      <p style="color:var(--ink-3); margin-bottom:20px">Your sponsor will review and process this recommendation within 2 business days.</p>
+      <button class="btn" onclick="hideModal(); goDonor('d-home')">Back to dashboard</button>
+    </div>
+  `);
+}
+
+// ---------- DONOR: INVEST ----------
+DonorPages['d-invest'] = () => `
+  <div class="page-h">
+    <div><h1>Investments</h1>
+      <div class="page-h-sub">Short-term growth across sponsor-managed vehicles · tax-free compounding</div></div>
+    <div class="page-h-actions"><button class="btn">+ New allocation</button></div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-label">Portfolio value</div><div class="stat-value">${fmt(DATA.balance)}</div><div class="stat-delta">+${fmtPct(11.4)} TTM</div></div>
+    <div class="stat-card"><div class="stat-label">YTD gain (tax-free)</div><div class="stat-value">${fmt(498340)}</div><div class="stat-delta">Compounds inside DAF</div></div>
+    <div class="stat-card"><div class="stat-label">SPV allocation</div><div class="stat-value">12%</div><div class="stat-delta">Capped at 15%</div></div>
+    <div class="stat-card"><div class="stat-label">Weighted avg lockup</div><div class="stat-value">8.2 mo</div><div class="stat-delta">All liquid under 24mo</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-h"><div class="card-title">Vehicle allocation</div></div>
+      <table>
+        <thead><tr><th>Vehicle</th><th>Type</th><th>Alloc</th><th>Balance</th><th>1Y</th></tr></thead>
+        <tbody>
+          ${DATA.investments.map(v => `
+            <tr>
+              <td><strong>${v.name}</strong></td>
+              <td style="color:var(--ink-3); font-size:12px">${v.type}</td>
+              <td class="mono-cell">${v.alloc}%</td>
+              <td>${fmt(v.bal)}</td>
+              <td style="color:var(--moss)" class="mono-cell">${fmtPct(v.perf1y)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-title">Performance vs benchmark</div></div>
+      <div class="chart-box tall"><canvas id="perf-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-title">Available offerings</div><div class="card-sub">New vehicles opening to Thematic-tier donors</div></div>
+    <table>
+      <thead><tr><th>Vehicle</th><th>Strategy</th><th>Min</th><th>Lockup</th><th>Est. return</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Pacific Housing Preservation Fund III</strong></td><td>Mission-aligned CRE debt</td><td class="mono-cell">$100K</td><td>18 mo</td><td class="mono-cell">8–10%</td><td><button class="btn ghost sm">Details</button></td></tr>
+        <tr><td><strong>Green Hydrogen SPV</strong></td><td>Climate venture co-invest</td><td class="mono-cell">$250K</td><td>36 mo</td><td class="mono-cell">15–20%</td><td><button class="btn ghost sm">Details</button></td></tr>
+        <tr><td><strong>Catalytic Capital Debt Fund</strong></td><td>Below-market SMB debt</td><td class="mono-cell">$50K</td><td>12 mo</td><td class="mono-cell">4–6%</td><td><button class="btn ghost sm">Details</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+`;
+
+DonorInits['d-invest'] = () => {
+  const months = ['Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'];
+  chartInstances.perf = new Chart(document.getElementById('perf-chart'), {
+    type: 'line',
+    data: { labels: months,
+      datasets: [
+        { label: 'Your portfolio', data: [100,102,104,103.5,106,108,109,108.5,111,112,113,114.5], borderColor: chartTheme.moss, borderWidth: 2.5, tension: 0.3, pointRadius: 0, fill: false },
+        { label: 'Benchmark (60/40)', data: [100,101,102,101.5,103,104,105,105.5,106,106,107,108], borderColor: chartTheme.text, borderWidth: 1.5, borderDash: [4,4], tension: 0.3, pointRadius: 0, fill: false }
+      ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+      scales: { y: { ticks: { callback: v => v + '' }, grid: { color: chartTheme.grid } }, x: { grid: { display: false } } }
+    }
+  });
+};
+
+// ---------- DONOR: TAX ----------
+DonorPages['d-tax'] = () => `
+  <div class="page-h">
+    <div><h1>Tax Center</h1><div class="page-h-sub">Tax year 2026 · as of ${fmtDate('2026-10-20')}</div></div>
+    <div class="page-h-actions">
+      <button class="btn ghost">Download 2025 summary</button>
+      <button class="btn">Export CPA packet</button>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-label">2026 Deductions YTD</div><div class="stat-value">${fmt(2150000)}</div><div class="stat-delta">Across 4 contributions</div></div>
+    <div class="stat-card"><div class="stat-label">Capital gains avoided</div><div class="stat-value">${fmt(642000)}</div><div class="stat-delta">Vs. selling first</div></div>
+    <div class="stat-card"><div class="stat-label">Carryforward available</div><div class="stat-value">${fmt(DATA.carryforward)}</div><div class="stat-delta">Expires 2029</div></div>
+    <div class="stat-card"><div class="stat-label">Est. 2026 tax savings</div><div class="stat-value">${fmt(1037000)}</div><div class="stat-delta">37% + NIIT bracket</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-h"><div class="card-title">Contributions this year</div></div>
+      <table>
+        <thead><tr><th>Date</th><th>Asset</th><th>FMV</th><th>Holding</th><th>Deductible</th></tr></thead>
+        <tbody>
+          <tr><td class="mono-cell">Oct 14</td><td>1,000 NVDA</td><td>${fmt(540000)}</td><td><span class="badge ok">Long-term</span></td><td><strong>${fmt(540000)}</strong></td></tr>
+          <tr><td class="mono-cell">Sep 28</td><td>Wire · cash</td><td>${fmt(100000)}</td><td><span class="badge info">Cash</span></td><td><strong>${fmt(100000)}</strong></td></tr>
+          <tr><td class="mono-cell">Sep 02</td><td>600 TSLA</td><td>${fmt(220000)}</td><td><span class="badge ok">Long-term</span></td><td><strong>${fmt(220000)}</strong></td></tr>
+          <tr><td class="mono-cell">Jul 11</td><td>Pre-IPO shares (private co.)</td><td>${fmt(1290000)}</td><td><span class="badge ok">Long-term</span></td><td><strong>${fmt(1290000)}</strong><br/><span style="font-size:11px; color:var(--ink-3)">Qualified appraisal on file</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-title">AGI deductibility (IRS Pub. 526)</div></div>
+      <table class="table-sm">
+        <tr><td>Est. 2026 AGI</td><td class="mono-cell" style="text-align:right">$6,500,000</td></tr>
+        <tr><td>Max deduction @ 30% (LT appreciated)</td><td class="mono-cell" style="text-align:right">$1,950,000</td></tr>
+        <tr><td>Max deduction @ 60% (cash)</td><td class="mono-cell" style="text-align:right">$3,900,000</td></tr>
+        <tr><td>Used this year</td><td class="mono-cell" style="text-align:right; color:var(--moss)">$2,150,000</td></tr>
+        <tr style="border-top:1px solid var(--rule-2)"><td><strong>Carryforward to 2027</strong></td><td class="mono-cell" style="text-align:right"><strong>${fmt(DATA.carryforward)}</strong></td></tr>
+      </table>
+      <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--rule); font-size:12px; color:var(--ink-3)">
+        <strong>Carryforward schedule:</strong><br/>
+        2027: ${fmt(560000)} available · 2028: ${fmt(420000)} · 2029: ${fmt(260000)} (expires)
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-title">Documents on file</div></div>
+    <table class="table-sm">
+      <tr><td>Form 8283 Section B · pre-IPO contribution (Jul 2026)</td><td><span class="badge ok">Countersigned</span></td><td><button class="btn ghost sm">Download</button></td></tr>
+      <tr><td>Qualified appraisal · pre-IPO shares</td><td><span class="badge ok">On file</span></td><td><button class="btn ghost sm">Download</button></td></tr>
+      <tr><td>Contemporaneous written acknowledgment · all 2026 gifts</td><td><span class="badge ok">Delivered</span></td><td><button class="btn ghost sm">Download</button></td></tr>
+      <tr><td>2025 annual contribution statement</td><td><span class="badge ok">Final</span></td><td><button class="btn ghost sm">Download</button></td></tr>
+    </table>
+  </div>
+`;
+
+// ---------- DONOR: IMPACT ----------
+DonorPages['d-impact'] = () => `
+  <div class="page-h">
+    <div><h1>Impact</h1><div class="page-h-sub">What your giving has supported</div></div>
+    <div class="page-h-actions"><button class="btn">Share impact report</button></div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-label">Lifetime granted</div><div class="stat-value">${fmt(DATA.granted_ltd)}</div><div class="stat-delta">Since 2019</div></div>
+    <div class="stat-card"><div class="stat-label">Organizations supported</div><div class="stat-value">47</div><div class="stat-delta">Across 6 themes</div></div>
+    <div class="stat-card"><div class="stat-label">Est. beneficiaries</div><div class="stat-value">124,200</div><div class="stat-delta">Aggregated self-reported</div></div>
+    <div class="stat-card"><div class="stat-label">Multi-year commitments</div><div class="stat-value">8</div><div class="stat-delta">${fmt(1240000)} committed</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-h"><div class="card-title">Giving by theme</div></div>
+      <div class="chart-box tall"><canvas id="impact-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-title">Grantee outcomes</div></div>
+      <div style="padding:12px 0; border-bottom:1px solid var(--rule)"><strong>Watershed Alliance</strong><div style="font-size:12px;color:var(--ink-3);margin-top:4px">Protected 1,240 acres of headwaters · exceeded Q3 target by 18%</div></div>
+      <div style="padding:12px 0; border-bottom:1px solid var(--rule)"><strong>Partners In Health · Lesotho</strong><div style="font-size:12px;color:var(--ink-3);margin-top:4px">4,800 patients served · HIV viral suppression at 94%</div></div>
+      <div style="padding:12px 0; border-bottom:1px solid var(--rule)"><strong>Rhode Island School of Design</strong><div style="font-size:12px;color:var(--ink-3);margin-top:4px">12 full-tuition scholarships awarded for FY2027</div></div>
+      <div style="padding:12px 0"><strong>Boys & Girls Clubs of Dallas</strong><div style="font-size:12px;color:var(--ink-3);margin-top:4px">Afterschool program retention: 87% YoY</div></div>
+    </div>
+  </div>
+`;
+
+DonorInits['d-impact'] = () => {
+  chartInstances.impact = new Chart(document.getElementById('impact-chart'), {
+    type: 'bar',
+    data: { labels: ['Climate','Education','Health','Arts','Housing','Civil Rights'],
+      datasets: [{ data: [1240000, 820000, 540000, 310000, 190000, 140000],
+        backgroundColor: ['#2d4a3a','#3f6b55','#5a8871','#7a9f82','#95b39d','#b1c7b8'], borderWidth: 0, borderRadius: 4 }]},
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: v => '$' + (v/1000) + 'K' }, grid: { color: chartTheme.grid } }, x: { grid: { display: false } } } }
+  });
+};
+
+// ---------- DONOR: HISTORY ----------
+DonorPages['d-history'] = () => `
+  <div class="page-h">
+    <div><h1>Activity</h1><div class="page-h-sub">All transactions</div></div>
+    <div class="page-h-actions">
+      <button class="btn ghost">Filter</button>
+      <button class="btn">Export CSV</button>
+    </div>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody>
+        ${DATA.activity.map(a => `
+          <tr>
+            <td class="mono-cell">${fmtDateShort(a.date)}</td>
+            <td><span class="badge neutral">${a.type}</span></td>
+            <td><strong>${a.title}</strong><div style="color:var(--ink-3);font-size:12px;margin-top:2px">${a.sub}</div></td>
+            <td style="color:${a.amount >= 0 ? 'var(--moss)' : 'var(--ink)'}"><strong>${a.amount >= 0 ? '+' : ''}${fmt(a.amount)}</strong></td>
+            <td><span class="badge ok">Settled</span></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+`;
+
+// ---------- DONOR: PREFS ----------
+DonorPages['d-prefs'] = () => `
+  <div class="page-h"><div><h1>Preferences</h1><div class="page-h-sub">Communication, defaults, and succession</div></div></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:16px">Notifications</div>
+      ${[
+        ['Grant status updates','Email · when sent, settled, acknowledged'],
+        ['Contribution receipts','Email · immediate on settlement'],
+        ['Quarterly statements','Email · 15th of month after close'],
+        ['Impact reports from grantees','In-app · as received'],
+        ['New investment offerings','Email · for Thematic-tier only'],
+      ].map(([t, s], i) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom: ${i < 4 ? '1px solid var(--rule)' : 'none'}">
+          <div><div style="font-weight:500; font-size:13px">${t}</div><div style="color:var(--ink-3); font-size:12px">${s}</div></div>
+          <label class="toggle"><input type="checkbox" ${i < 4 ? 'checked' : ''}/><span class="slider"></span></label>
+        </div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:16px">Giving defaults</div>
+      <div class="form-row"><label class="label">Default acknowledgment</label>
+        <select><option>Full acknowledgment (Chen Family Foundation)</option><option>Anonymous</option></select>
+      </div>
+      <div class="form-row"><label class="label">Preferred theme priority</label>
+        <select><option>Climate · Education · Health</option><option>Health · Climate · Housing</option></select>
+      </div>
+      <div class="form-row"><label class="label">Grant source default</label>
+        <select><option>Cash balance</option><option>Longest-held appreciated vehicle</option></select>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="card-title" style="margin-bottom:12px">Successor advisors</div>
+    <div style="color:var(--ink-3); font-size:13px; margin-bottom:16px">Designate who may recommend grants after your lifetime. Up to 3 successors in named priority.</div>
+    <table class="table-sm">
+      <tr><td>1. Michael Chen (son)</td><td class="mono-cell">m.chen@...</td><td><span class="badge ok">Accepted</span></td></tr>
+      <tr><td>2. Elena Chen (daughter)</td><td class="mono-cell">elena@...</td><td><span class="badge warn">Invite pending</span></td></tr>
+      <tr><td>3. [not designated]</td><td></td><td><button class="btn ghost sm">+ Add</button></td></tr>
+    </table>
+  </div>
+`;
+
+// ============================================================================
+// ADMIN PAGES
+// ============================================================================
+const AdminPages = {};
+const AdminInits = {};
+
+// ---------- ADMIN: HOME ----------
+AdminPages['a-home'] = () => `
+  <div class="page-h">
+    <div><h1>Operations</h1><div class="page-h-sub">Meridian Charitable Trust · public charity sponsor · as of ${fmtDate('2026-10-20')}</div></div>
+    <div class="page-h-actions">
+      <button class="btn ghost">Today's queue</button>
+      <button class="btn">+ Onboard donor</button>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-label">AUM</div><div class="stat-value">$1.42B</div><div class="stat-delta">+8.4% YoY</div></div>
+    <div class="stat-card"><div class="stat-label">Active donors</div><div class="stat-value">${DATA.donors_total}</div><div class="stat-delta">+12 this quarter</div></div>
+    <div class="stat-card"><div class="stat-label">Grants this month</div><div class="stat-value">${DATA.grants_mtd}</div><div class="stat-delta">${fmt(14200000)} outbound</div></div>
+    <div class="stat-card"><div class="stat-label">Compliance items</div><div class="stat-value" style="color:var(--warn)">${DATA.compliance_items}</div><div class="stat-delta down">Need review</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-h"><div class="card-title">AUM growth</div><div class="card-sub">Trailing 24 months by tier</div></div>
+      <div class="chart-box tall"><canvas id="aum-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-title">Today's queue</div></div>
+      ${[
+        { t: 'Review grant to Afghan Girls Fund', s: '$20K · PPA §4966 enhanced due diligence', badge: 'warn' },
+        { t: 'Approve pre-IPO contribution appraisal', s: 'Chen Family · $1.29M', badge: 'warn' },
+        { t: 'Countersign Form 8283 Section B', s: '3 pending from this week', badge: 'ok' },
+        { t: 'Quarterly reconciliation · Carta', s: 'SPV II positions · 42 entities', badge: 'ok' },
+        { t: 'OFAC rescreen · international grantees', s: 'Weekly batch · 23 orgs', badge: 'ok' },
+      ].map(q => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--rule)">
+          <div><div style="font-weight:500;font-size:13px">${q.t}</div><div style="color:var(--ink-3);font-size:12px;margin-top:2px">${q.s}</div></div>
+          <span class="badge ${q.badge}">${q.badge === 'warn' ? 'Action' : 'Auto'}</span>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-title">Top donors by balance</div><a class="btn ghost sm" onclick="goAdmin('a-donors')">View all</a></div>
+    <table>
+      <thead><tr><th>Donor</th><th>Balance</th><th>MTD grants</th><th>Tier</th><th>State</th><th>Advisor</th></tr></thead>
+      <tbody>
+        ${DATA.topDonors.slice(0, 6).map(d => `
+          <tr class="clickable">
+            <td><strong>${d.name}</strong></td>
+            <td>${fmt(d.balance)}</td>
+            <td>${fmt(d.mtd_grants)}</td>
+            <td><span class="badge ${d.tier==='Thematic'?'info':(d.tier==='Premier'?'ok':'neutral')}">${d.tier}</span></td>
+            <td class="mono-cell">${d.state}</td>
+            <td>${d.advisor}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+`;
+
+AdminInits['a-home'] = () => {
+  const months = ['Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'];
+  chartInstances.aum = new Chart(document.getElementById('aum-chart'), {
+    type: 'bar',
+    data: { labels: months,
+      datasets: [
+        { label: 'Standard', data: months.map((_,i) => 180 + i * 2 + Math.sin(i)*5), backgroundColor: '#95b39d', stack: 'a' },
+        { label: 'Premier', data: months.map((_,i) => 220 + i * 4 + Math.cos(i)*8), backgroundColor: '#5a8871', stack: 'a' },
+        { label: 'Thematic', data: months.map((_,i) => 420 + i * 18), backgroundColor: '#2d4a3a', stack: 'a' },
+      ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+      scales: { y: { stacked: true, ticks: { callback: v => '$' + v + 'M' }, grid: { color: chartTheme.grid } },
+        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } } } }
+  });
+};
+
+// ---------- ADMIN: DONORS ----------
+AdminPages['a-donors'] = () => `
+  <div class="page-h">
+    <div><h1>Donor directory</h1><div class="page-h-sub">${DONOR_DIRECTORY.length} active · $${(DONOR_DIRECTORY.reduce((s,d)=>s+d.balance,0)/1e6).toFixed(1)}M under management</div></div>
+    <div class="page-h-actions">
+      <button class="btn ghost">Filter</button>
+      <button class="btn ghost">Export</button>
+      <button class="btn">+ Onboard</button>
+    </div>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Donor</th><th>Balance</th><th>MTD grants</th><th>Tier</th><th>State</th><th>Advisor</th><th>Status</th></tr></thead>
+      <tbody>
+        ${DONOR_DIRECTORY.sort((a,b)=>b.balance-a.balance).map(d => `
+          <tr class="clickable">
+            <td><strong>${d.name}</strong></td>
+            <td>${fmt(d.balance)}</td>
+            <td>${fmt(d.mtd_grants)}</td>
+            <td><span class="badge ${d.tier==='Thematic'?'info':(d.tier==='Premier'?'ok':'neutral')}">${d.tier}</span></td>
+            <td class="mono-cell">${d.state}</td>
+            <td>${d.advisor}</td>
+            <td><span class="badge ok">Active</span></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+`;
+
+// ---------- ADMIN: AGENT CONSOLE ----------
+AdminPages['a-agent'] = () => `
+  <div class="page-h">
+    <div><h1>Agent Console</h1><div class="page-h-sub">Autonomous operations across intake, grants, compliance, and reconciliation</div></div>
+    <div class="page-h-actions">
+      <span class="badge ok"><span class="pulse-dot"></span> 7 agents active</span>
+      <button class="btn ghost">History</button>
+      <button class="btn">Define new workflow</button>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-h"><div class="card-title">Capabilities</div></div>
+      ${[
+        ['Automated grant due diligence','Pub. 78, OFAC SDN, state registration, press screen',true],
+        ['Form 8282 trigger & file','On any noncash disposition within 3 years',true],
+        ['Form 8283 Section B countersign','Auto-prepared for donor signature',true],
+        ['PPA §4966/§4967 real-time screening','Blocks ineligible grants at recommendation',true],
+        ['Carta reconciliation','Nightly SPV cap-table reconciliation',true],
+        ['Donor acknowledgment letters','CWA for $250+ · delivered within 48h',true],
+        ['Grant check / ACH disbursement','After compliance clear',false],
+        ['Quarterly donor statements','Generate, deliver, log confirmations',true],
+        ['International ED/ER workflow','Via NGOsource and manual escalation',true],
+        ['Fee calc & draw','Pre-notify, pull from cash first',false],
+      ].map(([t, s, on]) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--rule)">
+          <div><div style="font-weight:500;font-size:13px">${t}</div><div style="color:var(--ink-3);font-size:12px;margin-top:2px">${s}</div></div>
+          <label class="toggle"><input type="checkbox" ${on?'checked':''}/><span class="slider"></span></label>
+        </div>`).join('')}
+    </div>
+    <div class="card" style="padding:0; overflow:hidden">
+      <div style="padding:16px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--rule)">
+        <div><div class="card-title">Live operations log</div><div class="card-sub">Streaming · last 100 events</div></div>
+        <div style="display:flex; align-items:center; gap:8px"><span class="pulse-dot"></span><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--moss)">LIVE</span></div>
+      </div>
+      <div class="console" id="agent-console"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-h"><div class="card-title">Suggested actions</div><div class="card-sub">Agent proposals requiring human sign-off</div></div>
+    ${[
+      ['Reclassify 2 DAFs flagged under §4943','Both hold &gt; 20% voting stock in private co.; propose partial disposition schedule.','Review'],
+      ['Expedite Afghan Girls Fund ED','Enhanced OFAC pass needed before Oct 25 cycle. Draft prepared.','Approve ED'],
+      ['Issue 487 CWA letters for Q3','All $250+ gifts need contemporaneous written acknowledgment by Dec 31. Draft letters ready.','Send batch'],
+    ].map(([t, s, cta]) => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--rule)">
+        <div><div style="font-weight:500;font-size:13px">${t}</div><div style="color:var(--ink-3);font-size:12px;margin-top:3px">${s}</div></div>
+        <button class="btn sm">${cta}</button>
+      </div>`).join('')}
+  </div>
+`;
+
+AdminInits['a-agent'] = () => {
+  const console_ = document.getElementById('agent-console');
+  const samples = [
+    ['ok', 'intake', 'Received DTC transfer: 1,000 NVDA @ $540.12 from Schwab 0164 → MER-10928'],
+    ['ok', 'ofac', 'Grantee screen passed: Watershed Alliance of the Rockies (EIN 93-1134164)'],
+    ['ok', 'pub78', 'Pub. 78 confirmed: 23 orgs in overnight batch'],
+    ['ok', 'grant', 'Grant disbursed: Boys & Girls Clubs of Dallas · $15,000 ACH'],
+    ['warn', 'ppa4943', 'Monitor: DAF-0942 excess business holdings · 18% of voting (near 20% cap)'],
+    ['ok', 'ack', 'Contemporaneous written acknowledgment sent: 14 gifts, $250+ each'],
+    ['sys', 'carta', 'Reconciliation complete: Climate-Tech SPV II · 42 positions · 0 drift'],
+    ['ok', 'form8282', 'Form 8282 filed: NVDA disposition at Fidelity · basis $180K FMV $540K'],
+    ['ok', 'intl', 'Equivalency determination received from NGOsource: Fundación Educar Chile'],
+    ['warn', 'ed', 'Enhanced ED required: Afghan Girls Financial Assistance Fund (sanctions jurisdiction)'],
+    ['ok', 'state', 'State registration renewed: NY CHAR500 · fee $750 · 2027-05-15 next'],
+    ['ok', 'grant', 'Grant disbursed: Partners In Health · Lesotho · $75,000 wire'],
+    ['sys', 'audit', 'Daily audit log written: 1,284 events · hash 0x9e4a...2f8c'],
+    ['ok', 'cwa', 'Donor statement delivered: Alvarez Giving Account (Q3)'],
+    ['ok', 'cash', 'Fee draw: Chen Family Foundation · $11,208 · 0.75bps monthly'],
+  ];
+  let idx = 0;
+  const addLine = () => {
+    const [tag, src, msg] = samples[idx % samples.length];
+    const now = new Date();
+    const ts = now.toTimeString().slice(0, 8);
+    const line = document.createElement('div');
+    line.className = 'console-line';
+    line.innerHTML = `<span class="console-time">${ts}</span><span class="console-tag ${tag}">[${src.padEnd(7, ' ')}]</span><span class="console-msg">${msg}</span>`;
+    console_.appendChild(line);
+    console_.scrollTop = console_.scrollHeight;
+    idx++;
+  };
+  // Seed with a few
+  for (let i = 0; i < 10; i++) addLine();
+  agentLogTimer = setInterval(addLine, 4500);
+};
+
+// ---------- ADMIN: COMPLIANCE (THE BIG ONE) ----------
+AdminPages['a-compliance'] = () => `
+  <div class="page-h">
+    <div><h1>Compliance</h1><div class="page-h-sub">Federal, state, PPA 2006, international, and donor documentation · Meridian Charitable Trust</div></div>
+    <div class="page-h-actions">
+      <button class="btn ghost">Audit log</button>
+      <button class="btn">+ File extension</button>
+    </div>
+  </div>
+
+  <div class="compliance-sub">
+    ${[
+      ['overview','Overview'],['federal','Federal (IRS)'],['state','State Registration'],
+      ['ppa','PPA 2006 Monitoring'],['intl','International Grants'],['donor','Donor Documentation'],
+      ['audit','Audit Prep'],
+    ].map(([id, name]) => `
+      <button class="compliance-sub-tab ${currentComplianceTab === id ? 'active' : ''}" onclick="currentComplianceTab='${id}'; goAdmin('a-compliance')">${name}</button>
+    `).join('')}
+  </div>
+
+  <div id="compliance-body">${renderComplianceTab()}</div>
+`;
+
+AdminInits['a-compliance'] = () => {
+  if (currentComplianceTab === 'overview') initComplianceOverviewCharts();
+};
+
+function renderComplianceTab() {
+  const t = currentComplianceTab;
+  if (t === 'overview') return renderComplianceOverview();
+  if (t === 'federal') return renderComplianceFederal();
+  if (t === 'state') return renderComplianceState();
+  if (t === 'ppa') return renderCompliancePPA();
+  if (t === 'intl') return renderComplianceIntl();
+  if (t === 'donor') return renderComplianceDonor();
+  if (t === 'audit') return renderComplianceAudit();
+  return '';
+}
+
+function renderComplianceOverview() {
+  const totalFed = DATA.federalFilings.length;
+  const fedOk = DATA.federalFilings.filter(f => ['registered','ok','exempt','ongoing'].includes(f.status)).length;
+  const fedInProgress = DATA.federalFilings.filter(f => f.status === 'in-progress').length;
+  const fedDue = DATA.federalFilings.filter(f => f.status === 'due').length;
+  const fedPending = DATA.federalFilings.filter(f => f.status === 'pending' || f.status === 'review').length;
+
+  const stateRegistered = DATA.stateFilings.filter(s => s.status === 'registered').length;
+  const stateDue = DATA.stateFilings.filter(s => s.status === 'due').length;
+  const stateOverdue = DATA.stateFilings.filter(s => s.status === 'overdue').length;
+  const stateExempt = DATA.stateFilings.filter(s => s.status === 'exempt').length;
+
+  return `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Overall posture</div><div class="stat-value" style="color:var(--moss)">Clear</div><div class="stat-delta">1 overdue · 2 due in 30d</div></div>
+      <div class="stat-card"><div class="stat-label">Federal filings</div><div class="stat-value">${totalFed}</div><div class="stat-delta">${fedInProgress} in prep · ${fedDue + fedPending} pending</div></div>
+      <div class="stat-card"><div class="stat-label">State registrations</div><div class="stat-value">${stateRegistered}/${DATA.stateFilings.length}</div><div class="stat-delta down">${stateOverdue} overdue · ${stateDue} due this month</div></div>
+      <div class="stat-card"><div class="stat-label">PPA 2006 flags</div><div class="stat-value" style="color:var(--warn)">1</div><div class="stat-delta down">§4943 excess holdings</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-h">
+        <div><div class="card-title">Filing calendar · 2026-2027</div><div class="card-sub">Current month: October · click a month for details</div></div>
+      </div>
+      <div class="cal-grid">
+        ${['Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'].map((m,i) => {
+          const counts = [3, 4, 8, 2, 3, 6, 15, 2, 5, 1, 4, 3];
+          const critical = [10, 18];
+          const current = i === 11;
+          const cls = critical.includes(counts[i]) ? 'critical' : (counts[i] > 0 ? 'has-filings' : '');
+          return `<div class="cal-month-cell ${cls} ${current?'current':''}" title="${m}: ${counts[i]} filings">
+            <div style="font-size:14px; font-weight:600; font-family:'Fraunces',serif">${m}</div>
+            <div class="cal-count">${counts[i]}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--moss-light)"></div>Standard filings</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--warn)"></div>Peak filing month (990 + state renewals)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--paper-2); border:1px solid var(--rule)"></div>No filings</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:none; border:2px solid var(--ink)"></div>Current month</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-h"><div class="card-title">Upcoming deadlines (next 90 days)</div></div>
+        ${[
+          { d: '2026-10-31', days: 11, title: 'Form 941 · Q3 federal payroll', sub: 'IRS · $142,840 estimated remittance', tag: 'warn' },
+          { d: '2026-10-31', days: 11, title: 'SC Form PCF renewal', sub: 'South Carolina Secretary of State · $50', tag: 'danger' },
+          { d: '2026-11-15', days: 26, title: 'AL Form CR-02 renewal', sub: 'Alabama AG Consumer Protection · $25', tag: 'warn' },
+          { d: '2026-11-30', days: 41, title: 'LA Charitable Org. Reg. renewal', sub: 'Louisiana AG · $25', tag: 'warn' },
+          { d: '2026-12-31', days: 72, title: 'Deadline for 2026 tax-year contributions', sub: 'Donor-facing · must receive assets by EOD', tag: 'info' },
+          { d: '2027-01-15', days: 87, title: 'DE Franchise Tax', sub: 'DE Division of Corporations · $25', tag: 'neutral' },
+          { d: '2027-01-31', days: 103, title: 'Form 1099-NEC / W-2 · to recipients', sub: 'IRS · 38 contractors + 24 employees', tag: 'neutral' },
+        ].map(d => `
+          <div class="deadline-row">
+            <div>
+              <div class="deadline-date">${fmtDateShort(d.d)}</div>
+              <div class="deadline-date-sub">${d.d.slice(0,4)}</div>
+            </div>
+            <div>
+              <div class="deadline-title">${d.title}</div>
+              <div class="deadline-sub">${d.sub}</div>
+            </div>
+            <div class="deadline-days"><span class="badge ${d.tag}">${d.days}d</span></div>
+          </div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-h"><div class="card-title">Last 30 days · filings completed</div></div>
+        ${[
+          { d: '2026-10-15', title: 'Form 8282 filed · AAPL disposition (Alvarez)', agent: 'Agent · auto' },
+          { d: '2026-10-12', title: 'OFAC rescreen complete · 142 donors + 487 grantees', agent: 'Agent · weekly' },
+          { d: '2026-10-08', title: '14 CWA letters sent for $250+ gifts', agent: 'Agent · batch' },
+          { d: '2026-10-04', title: 'MO Charitable Org. Reg. renewed · $15', agent: 'K. Yang' },
+          { d: '2026-09-30', title: 'Q3 bank reconciliation · 4 custody accounts', agent: 'Agent · auto' },
+          { d: '2026-09-28', title: 'Form 8283 Section B countersigned (NVDA, Chen)', agent: 'Agent · auto' },
+          { d: '2026-09-22', title: 'Carta cap-table reconciliation · SPV II', agent: 'Agent · nightly' },
+        ].map(d => `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--rule)">
+            <div>
+              <div style="font-weight:500;font-size:13px">${d.title}</div>
+              <div style="color:var(--ink-3);font-size:12px;margin-top:2px">${fmtDate(d.d)} · ${d.agent}</div>
+            </div>
+            <span class="badge ok">✓</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="section-h">Posture by category</div>
+    <div class="grid-3">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px">
+          <strong>Federal (IRS)</strong><span class="mono-cell" style="color:var(--moss)">${Math.round(fedOk/totalFed*100)}%</span>
+        </div>
+        <div class="meter"><div class="meter-fill" style="width:${fedOk/totalFed*100}%"></div></div>
+        <div style="font-size:12px; color:var(--ink-3); margin-top:8px">${fedOk} complete · ${fedInProgress} in prep · ${fedDue + fedPending} pending</div>
+      </div>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px">
+          <strong>State registrations</strong><span class="mono-cell" style="color:var(--warn)">${Math.round(stateRegistered/(DATA.stateFilings.length-stateExempt)*100)}%</span>
+        </div>
+        <div class="meter"><div class="meter-fill warn" style="width:${stateRegistered/(DATA.stateFilings.length-stateExempt)*100}%"></div></div>
+        <div style="font-size:12px; color:var(--ink-3); margin-top:8px">${stateRegistered} active · ${stateDue + stateOverdue} need action · ${stateExempt} exempt</div>
+      </div>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px">
+          <strong>PPA 2006 excise</strong><span class="mono-cell" style="color:var(--moss)">Clear</span>
+        </div>
+        <div class="meter"><div class="meter-fill" style="width:95%"></div></div>
+        <div style="font-size:12px; color:var(--ink-3); margin-top:8px">0 taxable distributions · 1 §4943 watchlist item</div>
+      </div>
+    </div>
+  `;
+}
+
+function initComplianceOverviewCharts() {}
+
+// --- FEDERAL ---
+function renderComplianceFederal() {
+  const statusBadge = s => {
+    const map = {
+      'in-progress': ['warn', 'In prep'],
+      'pending': ['neutral', 'Not started'],
+      'review': ['warn', 'Review'],
+      'due': ['danger', 'Due soon'],
+      'ongoing': ['ok', 'Rolling'],
+      'registered': ['ok', 'Current'],
+      'exempt': ['neutral', 'Exempt'],
+      'none': ['neutral', 'Not triggered'],
+    };
+    const [c, l] = map[s] || ['neutral', s];
+    return `<span class="badge ${c}">${l}</span>`;
+  };
+  // Group
+  const groups = {
+    'Core 990 & Schedules': ['Form 990','Schedule D','Schedule F','Schedule I','Schedule L','Schedule M','Schedule R','Schedule B'],
+    'Unrelated Business Income': ['Form 990-T'],
+    'Noncash Gift Reporting': ['Form 8282','Form 8283 (Sect. B)','Form 8899'],
+    'Excise Tax Returns': ['Form 4720'],
+    'Split-Interest Trusts': ['Form 5227'],
+    'Payroll & Information Returns': ['Form 1099-NEC / MISC','Form W-2 / W-3','Form 941','Form 940'],
+    'Foreign Reporting': ['FinCEN 114 (FBAR)','Form 8938'],
+    'Cash & Beneficial Ownership': ['Form 8300','FinCEN BOI'],
+    'Employee Benefits': ['Form 5500'],
+  };
+
+  return `
+    <div class="callout info" style="margin-bottom:20px">
+      <div class="callout-title">Federal filing posture · Fiscal Year 2026 (ending Dec 31, 2026)</div>
+      <div class="callout-body">Meridian Charitable Trust is a public charity 501(c)(3) that sponsors donor-advised funds. The Pension Protection Act of 2006 (PPA) imposes DAF-specific obligations above standard public charity reporting. Core returns are prepared by Grant Thornton with Meridian's Finance team as primary.</div>
+    </div>
+
+    ${Object.entries(groups).map(([group, forms]) => `
+      <div class="section-h">${group} <span class="section-h-sub">${forms.length} filing${forms.length>1?'s':''}</span></div>
+      <div class="card" style="padding:0; margin-bottom:16px">
+        ${forms.map(formName => {
+          const f = DATA.federalFilings.find(x => x.form === formName);
+          if (!f) return '';
+          return `
+            <div class="filing-row">
+              <div class="filing-form">${f.form}</div>
+              <div>
+                <div class="filing-name">${f.name}</div>
+                <div class="filing-sub">${f.note}</div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:var(--ink-4); text-transform:uppercase; letter-spacing:0.06em">Frequency</div>
+                <div class="filing-due">${f.freq}</div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:var(--ink-4); text-transform:uppercase; letter-spacing:0.06em">Due</div>
+                <div class="filing-due">${f.due === 'Rolling' || f.due === 'With 990' ? f.due : fmtDateShort(f.due)}</div>
+              </div>
+              <div>${statusBadge(f.status)}</div>
+            </div>`;
+        }).join('')}
+      </div>
+    `).join('')}
+
+    <div class="section-h">Reference: What triggers each major form</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">Noncash gift chain of custody</div>
+        <div style="font-size:13px; line-height:1.7">
+          <div><strong>$0–$250:</strong> No written acknowledgment required (recommended)</div>
+          <div><strong>$250+ cash or noncash:</strong> Contemporaneous Written Acknowledgment (CWA) required · IRC §170(f)(8)</div>
+          <div><strong>$500+ noncash:</strong> Donor files Form 8283 Section A</div>
+          <div><strong>$5,000+ noncash (not publicly traded):</strong> Donor needs qualified appraisal; sponsor countersigns Form 8283 Section B</div>
+          <div><strong>Sponsor disposes within 3 years:</strong> Sponsor files Form 8282 within 125 days</div>
+          <div><strong>IP: 10-year window:</strong> Sponsor files Form 8899 annually for 10 years post-donation</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">DAF-specific PPA 2006 triggers</div>
+        <div style="font-size:13px; line-height:1.7">
+          <div><strong>§4966 Taxable distribution:</strong> Grant to natural person, non-charity, or distribution for non-charitable purpose → 20% sponsor + 5% manager excise</div>
+          <div><strong>§4967 Prohibited benefit:</strong> Donor/advisor receives more than incidental benefit → 125% advisor + 10% manager</div>
+          <div><strong>§4958 Excess benefit:</strong> Disqualified-person transaction above FMV → 25% initial, 200% second-tier</div>
+          <div><strong>§4943 Excess business holdings:</strong> &gt;20% voting stock (combined w/ disqualified persons) → 10% initial, 200% second-tier · 5-yr disposition period after contribution</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// --- STATE ---
+function renderComplianceState() {
+  const registered = DATA.stateFilings.filter(s => s.status === 'registered').length;
+  const due = DATA.stateFilings.filter(s => s.status === 'due').length;
+  const overdue = DATA.stateFilings.filter(s => s.status === 'overdue').length;
+  const exempt = DATA.stateFilings.filter(s => s.status === 'exempt').length;
+
+  return `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Jurisdictions registered</div><div class="stat-value">${registered}</div><div class="stat-delta">of ${DATA.stateFilings.length - exempt} required</div></div>
+      <div class="stat-card"><div class="stat-label">Renewals due (30d)</div><div class="stat-value" style="color:var(--warn)">${due}</div><div class="stat-delta down">AL, LA this cycle</div></div>
+      <div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value" style="color:var(--danger)">${overdue}</div><div class="stat-delta down">SC Form PCF</div></div>
+      <div class="stat-card"><div class="stat-label">Exempt jurisdictions</div><div class="stat-value">${exempt}</div><div class="stat-delta">AZ, ID, IA, IN, MT, NE, SD, VT, WY</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-h">
+        <div><div class="card-title">50-state registration map</div><div class="card-sub">Click a state for filing details</div></div>
+      </div>
+      <div class="state-grid">
+        ${DATA.stateFilings.map(s => `
+          <div class="state-cell ${s.status}" title="${s.state}: ${s.form}" onclick="showStateDetail('${s.st}')">
+            <div style="font-weight:700; font-size:12px">${s.st}</div>
+            <div style="font-size:9px; opacity:0.75; text-transform:uppercase; letter-spacing:0.04em">${s.status==='exempt'?'—':s.status.slice(0,6)}</div>
+          </div>`).join('')}
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--moss-light); border:1px solid var(--moss)"></div>Registered current</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--warn-light); border:1px solid var(--warn)"></div>Renewal due</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--danger-light); border:1px solid var(--danger)"></div>Overdue</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--paper-2); border:1px dashed var(--rule)"></div>Not required</div>
+      </div>
+    </div>
+
+    <div class="section-h">All state filings <span class="section-h-sub">Sortable · ${DATA.stateFilings.length} jurisdictions</span></div>
+    <div class="card" style="padding:0">
+      <table>
+        <thead><tr><th>St.</th><th>State</th><th>Primary form</th><th>Agency</th><th>Trigger</th><th>Fee</th><th>Next renewal</th><th>Status</th></tr></thead>
+        <tbody>
+          ${DATA.stateFilings.map(s => `
+            <tr>
+              <td class="mono-cell"><strong>${s.st}</strong></td>
+              <td>${s.state}</td>
+              <td style="font-size:12px">${s.form}</td>
+              <td style="font-size:12px; color:var(--ink-3)">${s.agency}</td>
+              <td style="font-size:12px; color:var(--ink-3)">${s.trigger}</td>
+              <td class="mono-cell" style="font-size:12px">${s.fee}</td>
+              <td class="mono-cell" style="font-size:12px">${s.renew === '—' ? '—' : s.renew}</td>
+              <td>
+                ${s.status==='registered' ? '<span class="badge ok">Current</span>' :
+                  s.status==='due' ? '<span class="badge warn">Due</span>' :
+                  s.status==='overdue' ? '<span class="badge danger">Overdue</span>' :
+                  '<span class="badge neutral">Exempt</span>'}
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-h">Multi-state registration strategy</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px">Where you must register</div>
+        <div style="font-size:13px; line-height:1.7">
+          Registration is triggered by <strong>solicitation</strong> in a state — any targeted ask (mail, email, grant website that invites in-state donors, phone, in-person event). A few states also trigger on <strong>holding assets</strong> in-state (CA, NY, MA, NH, OH, OR) regardless of solicitation. Nine states do not require sponsor registration (AZ, ID, IA, IN, MT, NE, SD, VT, WY).
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px">The Unified Registration Statement</div>
+        <div style="font-size:13px; line-height:1.7">
+          The URS (maintained by the Multi-State Filer Project) is accepted in 36 jurisdictions as a substitute for state-specific initial forms. CA, CO, FL, HI, NC, and OK accept URS with a state supplement; CA, FL, IL, NY, MA, PA require state-specific annual renewal forms regardless. Meridian uses URS for initial filings and renews via state forms.
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function showStateDetail(st) {
+  const s = DATA.stateFilings.find(x => x.st === st);
+  if (!s) return;
+  showModal(`
+    <h2>${s.state}</h2>
+    <div style="color:var(--ink-3); font-size:13px; margin-bottom:16px">${s.agency}</div>
+    <table class="table-sm">
+      <tr><td style="color:var(--ink-3)">Primary form</td><td><strong>${s.form}</strong></td></tr>
+      <tr><td style="color:var(--ink-3)">Trigger</td><td>${s.trigger}</td></tr>
+      <tr><td style="color:var(--ink-3)">Fee</td><td class="mono-cell">${s.fee}</td></tr>
+      <tr><td style="color:var(--ink-3)">Next renewal</td><td class="mono-cell">${s.renew}</td></tr>
+      <tr><td style="color:var(--ink-3)">Status</td><td>${s.status}</td></tr>
+    </table>
+    <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end">
+      <button class="btn ghost" onclick="hideModal()">Close</button>
+      <button class="btn">Open filing workflow</button>
+    </div>
+  `);
+}
+
+// --- PPA 2006 ---
+function renderCompliancePPA() {
+  return `
+    <div class="callout warn" style="margin-bottom:20px">
+      <div class="callout-title">Pension Protection Act of 2006 · DAF-specific excise regime</div>
+      <div class="callout-body">The PPA created four excise provisions that apply exclusively or primarily to DAFs. Automated monitoring runs on every grant recommendation (pre-disbursement) and every contribution. Any flag halts the transaction until a human reviewer clears it.</div>
+    </div>
+
+    ${DATA.ppaMonitors.map(m => `
+      <div class="monitor-row ${m.status === 'warn' ? 'warning' : (m.status === 'flagged' ? 'flagged' : '')}">
+        <div class="monitor-icon">
+          ${m.status === 'ok' ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' :
+            m.status === 'warn' ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' :
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'}
+        </div>
+        <div>
+          <div class="monitor-title">${m.title} <span class="monitor-code">${m.code}</span></div>
+          <div class="monitor-detail">${m.detail}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="mono-cell" style="font-size:20px; font-weight:600; color:${m.status==='warn'?'var(--warn)':(m.status==='flagged'?'var(--danger)':'var(--moss)')}">${m.count.toLocaleString()}</div>
+          <div style="font-size:10px; color:var(--ink-4); text-transform:uppercase; letter-spacing:0.05em">${m.status==='warn' ? 'watchlist' : 'items screened'}</div>
+        </div>
+      </div>
+    `).join('')}
+
+    <div class="section-h">§4943 Excess business holdings · watchlist detail</div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="callout warn" style="margin-bottom:16px">
+        <div class="callout-title">Two DAF accounts hold concentrated single-issuer positions</div>
+        <div class="callout-body">Under IRC §4943 (made applicable to DAFs by PPA 2006), a DAF plus its disqualified persons may not hold more than 20% of a business enterprise's voting stock. Grace period: 5 years from receipt of contribution (10 years if an "unusually large" gift and specific IRS approval). First-tier excise is 10% of excess holdings; second-tier is 200% if not disposed.</div>
+      </div>
+      <table>
+        <thead><tr><th>DAF account</th><th>Holding</th><th>% of voting</th><th>Combined w/ disqualified</th><th>Receipt date</th><th>Disposition deadline</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Hollister Trust</strong></td>
+            <td>Series A preferred · PlateCo Inc. (private)</td>
+            <td class="mono-cell">14%</td>
+            <td class="mono-cell">18%</td>
+            <td class="mono-cell">2024-03-11</td>
+            <td class="mono-cell" style="color:var(--warn)">2029-03-11</td>
+            <td><span class="badge warn">Monitor</span></td>
+          </tr>
+          <tr>
+            <td><strong>Alvarez Giving Account</strong></td>
+            <td>Common · Delta Logistics LLC (closely held)</td>
+            <td class="mono-cell">22%</td>
+            <td class="mono-cell">24%</td>
+            <td class="mono-cell">2023-11-08</td>
+            <td class="mono-cell" style="color:var(--danger)">2028-11-08</td>
+            <td><span class="badge danger">Dispose</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px; display:flex; gap:10px">
+        <button class="btn sm">Draft disposition schedule</button>
+        <button class="btn ghost sm">Notify advisor</button>
+      </div>
+    </div>
+
+    <div class="section-h">§4966/§4967 real-time grant screening</div>
+    <div class="card">
+      <div style="font-size:13px; color:var(--ink-3); margin-bottom:16px">Every grant recommendation runs through this screen before disbursement. The agent blocks any transaction that would create a taxable distribution or prohibited benefit.</div>
+      <table>
+        <thead><tr><th>Screen</th><th>Logic</th><th>Last run</th><th>Last hit</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Grantee is public charity</strong></td><td style="font-size:12px">IRS Pub. 78 · BMF file match on EIN</td><td class="mono-cell">${new Date().toISOString().slice(0,10)}</td><td>Never</td></tr>
+          <tr><td><strong>Grantee is governmental unit</strong></td><td style="font-size:12px">GSA Entity match · state &amp; local gov EIN</td><td class="mono-cell">${new Date().toISOString().slice(0,10)}</td><td>Never</td></tr>
+          <tr><td><strong>No individual grantees</strong></td><td style="font-size:12px">Blocks SSN/ITIN as payee</td><td class="mono-cell">${new Date().toISOString().slice(0,10)}</td><td>Never (blocked at intake)</td></tr>
+          <tr><td><strong>No donor-controlled 501(c)(3)</strong></td><td style="font-size:12px">Cross-check donor family roster + board control</td><td class="mono-cell">${new Date().toISOString().slice(0,10)}</td><td>2024-07 (returned)</td></tr>
+          <tr><td><strong>No quid-pro-quo</strong></td><td style="font-size:12px">Grantee cannot provide donor benefit &gt; incidental</td><td class="mono-cell">${new Date().toISOString().slice(0,10)}</td><td>Never</td></tr>
+          <tr><td><strong>No bifurcated gift</strong></td><td style="font-size:12px">Grant cannot pay a pledge the donor made personally</td><td class="mono-cell">${new Date().toISOString().slice(0,10)}</td><td>Never</td></tr>
+          <tr><td><strong>No scholarship to related individual</strong></td><td style="font-size:12px">Even indirectly via related 501(c)(3)</td><td class="mono-cell">${new Date().toISOString().slice(0,10)}</td><td>Never</td></tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// --- INTL ---
+function renderComplianceIntl() {
+  return `
+    <div class="callout info" style="margin-bottom:20px">
+      <div class="callout-title">International grantmaking framework</div>
+      <div class="callout-body">Grants to foreign organizations require either (a) <strong>Equivalency Determination</strong> (ED) that the foreign entity is the equivalent of a US public charity, or (b) <strong>Expenditure Responsibility</strong> (ER) with pre-grant inquiry, written agreement, separate accounting, and annual reports. All international grantees screened against OFAC SDN, USA PATRIOT Act Anti-Terrorist Financing Guidelines, and FTO lists.</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">International grants YTD</div><div class="stat-value">${DATA.intlGrants.length * 7}</div><div class="stat-delta">${fmt(DATA.intlGrants.reduce((s,g)=>s+g.amount,0))} disbursed</div></div>
+      <div class="stat-card"><div class="stat-label">Via ED (NGOsource)</div><div class="stat-value">${DATA.intlGrants.filter(g=>g.method==='ED').length}</div><div class="stat-delta">Rev. Proc. 2017-53 compliant</div></div>
+      <div class="stat-card"><div class="stat-label">Via ER (sponsor-direct)</div><div class="stat-value">${DATA.intlGrants.filter(g=>g.method==='ER').length}</div><div class="stat-delta">Annual reports in file</div></div>
+      <div class="stat-card"><div class="stat-label">Enhanced OFAC review</div><div class="stat-value" style="color:var(--warn)">1</div><div class="stat-delta down">Afghanistan jurisdiction</div></div>
+    </div>
+
+    <div class="section-h">International grantees · active</div>
+    <div class="card" style="padding:0">
+      <table>
+        <thead><tr><th>Grantee</th><th>Country</th><th>Amount</th><th>Method</th><th>OFAC</th><th>Vetting agent</th><th>Valid through</th><th>Status</th></tr></thead>
+        <tbody>
+          ${DATA.intlGrants.map(g => `
+            <tr>
+              <td><strong>${g.grantee}</strong></td>
+              <td>${g.country}</td>
+              <td class="mono-cell">${fmt(g.amount)}</td>
+              <td><span class="badge ${g.method==='ED'?'info':'neutral'}">${g.method}</span></td>
+              <td>${g.ofac==='clear' ? '<span class="badge ok">Clear</span>' : '<span class="badge warn">Enhanced</span>'}</td>
+              <td style="font-size:12px; color:var(--ink-3)">${g.agent}</td>
+              <td class="mono-cell" style="font-size:12px">${g.valid}</td>
+              <td>${g.status==='ok' ? '<span class="badge ok">Approved</span>' : '<span class="badge warn">Review</span>'}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-h">Equivalency Determination · documentation checklist</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">ED package (Rev. Proc. 2017-53)</div>
+        <div style="font-size:13px; line-height:1.9">
+          ✓ Written opinion from qualified tax practitioner, or NGOsource ED letter<br/>
+          ✓ Grantee's charter, bylaws, IRS-equivalent recognition<br/>
+          ✓ Public support test (for public charity equivalency)<br/>
+          ✓ Prohibition on political activity<br/>
+          ✓ Prohibition on private inurement<br/>
+          ✓ Dissolution clause<br/>
+          ✓ Financial statements · trailing 3 years<br/>
+          ✓ Government recognition certificate (local)<br/>
+          ✓ Affidavit from grantee officer
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">ER package (IRC §4945(h))</div>
+        <div style="font-size:13px; line-height:1.9">
+          ✓ Pre-grant inquiry on grantee capacity<br/>
+          ✓ Written grant agreement specifying charitable purpose<br/>
+          ✓ Grantee commitment to maintain books available for inspection<br/>
+          ✓ Separate fund/account for grant proceeds<br/>
+          ✓ Prohibition on political activity or lobbying<br/>
+          ✓ Repayment of unexpended funds<br/>
+          ✓ Annual reports from grantee until funds fully expended<br/>
+          ✓ Final report on grant conclusion<br/>
+          ✓ Reporting on 990 Schedule F
+        </div>
+      </div>
+    </div>
+
+    <div class="section-h">Anti-terrorist financing · due diligence</div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title" style="font-size:15px; margin-bottom:8px">OFAC Specially Designated Nationals</div>
+        <div style="font-size:12px; color:var(--ink-3); line-height:1.6">Treasury's SDN list screened at every grant and at weekly rescreen cycles. Fuzzy match on names + aliases + addresses + known associates. Enhanced due diligence required for grantees operating in jurisdictions under comprehensive sanctions.</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:15px; margin-bottom:8px">USA PATRIOT Act · 501(c)(3)</div>
+        <div style="font-size:12px; color:var(--ink-3); line-height:1.6">Treasury's Anti-Terrorist Financing Guidelines (2006 revision) are voluntary best practices. Meridian follows them: documentation of grantee leadership, source-of-funds attestations, prohibition on sub-granting without approval.</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:15px; margin-bottom:8px">Foreign Terrorist Organizations</div>
+        <div style="font-size:12px; color:var(--ink-3); line-height:1.6">State Department FTO list and UN 1267/1988 sanctions lists cross-referenced. Grants to any individual or entity on these lists are prohibited and may trigger 18 USC §2339B criminal exposure.</div>
+      </div>
+    </div>
+  `;
+}
+
+// --- DONOR DOCS ---
+function renderComplianceDonor() {
+  return `
+    <div class="callout info" style="margin-bottom:20px">
+      <div class="callout-title">Donor-facing compliance workflows</div>
+      <div class="callout-body">These documents are generated by the sponsor and delivered to the donor. Failure to deliver can disallow the donor's deduction (CWA) or create signature-liability (Form 8283).</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">CWA letters YTD</div><div class="stat-value">2,140</div><div class="stat-delta">100% delivered within 48h</div></div>
+      <div class="stat-card"><div class="stat-label">Form 8283 Section B</div><div class="stat-value">38</div><div class="stat-delta">All countersigned on time</div></div>
+      <div class="stat-card"><div class="stat-label">Qualified appraisals on file</div><div class="stat-value">24</div><div class="stat-delta">Noncash gifts &gt; $5,000</div></div>
+      <div class="stat-card"><div class="stat-label">Form 8282 filings</div><div class="stat-value">14</div><div class="stat-delta">3-year dispositions</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-h"><div class="card-title">Contemporaneous Written Acknowledgment (IRC §170(f)(8))</div></div>
+        <div style="font-size:13px; color:var(--ink-3); margin-bottom:12px">Required for any single gift of $250 or more. Must be received by the donor by the earlier of (a) the date the donor files the return claiming the deduction, or (b) the due date of that return. Must contain:</div>
+        <div style="font-size:13px; line-height:1.8; margin-bottom:12px">
+          • Amount of cash and/or description of noncash<br/>
+          • Statement whether sponsor provided goods/services in exchange<br/>
+          • Good-faith estimate of the value of such goods/services, or statement that only intangible religious benefits<br/>
+          • <strong>DAF-specific:</strong> statement that sponsor has exclusive legal control over the asset
+        </div>
+        <button class="btn ghost sm">View CWA template</button>
+      </div>
+      <div class="card">
+        <div class="card-h"><div class="card-title">Form 8283 Section B · countersign workflow</div></div>
+        <div style="font-size:13px; color:var(--ink-3); margin-bottom:12px">For noncash gifts &gt; $5,000 (other than publicly traded securities), the donor must obtain a qualified appraisal and file Form 8283 Section B with their return. The sponsor countersigns Part IV acknowledging receipt.</div>
+        <table class="table-sm">
+          <tr><td>Pending countersign</td><td style="text-align:right"><strong>3</strong></td></tr>
+          <tr><td>Avg turnaround</td><td style="text-align:right">1.2 business days</td></tr>
+          <tr><td>SLA</td><td style="text-align:right">48 hours</td></tr>
+        </table>
+        <button class="btn sm" style="margin-top:12px">Open signing queue</button>
+      </div>
+    </div>
+
+    <div class="section-h">Form 8282 · Donee Information Return</div>
+    <div class="card">
+      <div style="font-size:13px; color:var(--ink-3); margin-bottom:12px">Required when sponsor disposes of noncash property &gt; $500 within 3 years of receipt. Filed with IRS within 125 days of disposition; copy to the original donor. Discloses amount received on disposition — flags abuse where donor overstated FMV.</div>
+      <table>
+        <thead><tr><th>Donor</th><th>Asset</th><th>Received</th><th>Disposed</th><th>FMV at gift</th><th>Proceeds</th><th>Filed</th></tr></thead>
+        <tbody>
+          <tr><td>Alvarez Giving Account</td><td>2,100 AAPL</td><td class="mono-cell">2024-02-10</td><td class="mono-cell">2026-10-02</td><td class="mono-cell">$402,780</td><td class="mono-cell">$438,210</td><td><span class="badge ok">Oct 15</span></td></tr>
+          <tr><td>Chen Family Foundation</td><td>Private LP interest · PineRidge VII</td><td class="mono-cell">2023-12-08</td><td class="mono-cell">2026-09-20</td><td class="mono-cell">$1,200,000</td><td class="mono-cell">$1,180,000</td><td><span class="badge ok">Sep 25</span></td></tr>
+          <tr><td>The Hollister Trust</td><td>Real estate · 1200 Elm, Dallas</td><td class="mono-cell">2024-05-14</td><td class="mono-cell">2026-08-30</td><td class="mono-cell">$2,100,000</td><td class="mono-cell">$2,240,000</td><td><span class="badge ok">Sep 10</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-h">Qualified appraisals · tracking</div>
+    <div class="card">
+      <div style="font-size:13px; color:var(--ink-3); margin-bottom:12px">Required for noncash gifts &gt; $5,000 (except publicly traded securities and vehicles sold at auction). Must be performed by a qualified appraiser, dated no earlier than 60 days before contribution, and no later than the due date of donor's return.</div>
+      <table>
+        <thead><tr><th>Donor</th><th>Asset</th><th>Appraised value</th><th>Appraiser</th><th>Appraisal date</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Chen Family Foundation</td><td>Pre-IPO shares · Catalyst AI</td><td class="mono-cell">$1,290,000</td><td>Valuation Research Corp.</td><td class="mono-cell">2026-06-28</td><td><span class="badge ok">On file</span></td></tr>
+          <tr><td>Whitfield Climate Initiative</td><td>Private carbon credits portfolio</td><td class="mono-cell">$8,420,000</td><td>Houlihan Lokey</td><td class="mono-cell">2026-07-14</td><td><span class="badge ok">On file</span></td></tr>
+          <tr><td>The Barnard Foundation</td><td>Vineyard · Napa Valley</td><td class="mono-cell">$3,100,000</td><td>Cushman &amp; Wakefield</td><td class="mono-cell">2026-05-20</td><td><span class="badge ok">On file</span></td></tr>
+          <tr><td>Northern Lights Education</td><td>Art collection · 12 works</td><td class="mono-cell">$2,840,000</td><td>Christie's Appraisal Services</td><td class="mono-cell">2026-09-12</td><td><span class="badge warn">Donor signature pending</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// --- AUDIT PREP ---
+function renderComplianceAudit() {
+  return `
+    <div class="callout info" style="margin-bottom:20px">
+      <div class="callout-title">Audit preparation · FY2026</div>
+      <div class="callout-body">Meridian is audited annually by Grant Thornton LLP under GAAS and FASB ASC 958 (Not-for-Profit Entities). Several states (NY, CA, MA, NJ) require audited financials with their annual charitable registration renewal when revenue exceeds specific thresholds. Audit workpapers are prepared through this interface.</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Fieldwork start</div><div class="stat-value">Feb 15</div><div class="stat-delta">119 days away</div></div>
+      <div class="stat-card"><div class="stat-label">Final audit opinion</div><div class="stat-value">Apr 30</div><div class="stat-delta">Prior to 990 filing</div></div>
+      <div class="stat-card"><div class="stat-label">PBC items prepared</div><div class="stat-value">62 / 184</div><div class="stat-delta">34% complete</div></div>
+      <div class="stat-card"><div class="stat-label">State audit req.</div><div class="stat-value">4 states</div><div class="stat-delta">NY, CA, MA, NJ</div></div>
+    </div>
+
+    <div class="section-h">Prepared-by-client (PBC) checklist</div>
+    <div class="card" style="padding:0; margin-bottom:16px">
+      ${[
+        ['Trial balance · all four quarters', 'Finance', 'done'],
+        ['Bank reconciliations · 4 custody accounts', 'Finance', 'done'],
+        ['Investment fair value memos · SPV II, SPV III, 3 funds', 'Finance', 'in-progress'],
+        ['Contribution register with FMV and basis', 'Operations', 'done'],
+        ['Grant register with recipient EIN and purpose', 'Operations', 'done'],
+        ['Form 990 governance questionnaire responses', 'Compliance', 'pending'],
+        ['Board minutes · trailing 24 months', 'Governance', 'done'],
+        ['Conflict of interest disclosures · all officers/directors', 'Governance', 'in-progress'],
+        ['Whistleblower policy acknowledgments', 'Governance', 'done'],
+        ['Document retention policy and attestations', 'Governance', 'done'],
+        ['Related-party transaction schedule (Schedule L prep)', 'Compliance', 'in-progress'],
+        ['Noncash gift schedule with Form 8283 copies', 'Compliance', 'in-progress'],
+        ['Allocation methodology memo · functional expense classification', 'Finance', 'pending'],
+        ['SOC 1 reports · custodians (Schwab, Fidelity, Goldman)', 'Operations', 'done'],
+        ['Access controls review · all platforms', 'IT', 'pending'],
+        ['UBIT calculation worksheet · SPV K-1 pass-throughs', 'Tax', 'in-progress'],
+      ].map(([item, owner, status]) => `
+        <div style="display:grid; grid-template-columns: 1fr 120px 100px; gap:16px; align-items:center; padding:12px 20px; border-bottom:1px solid var(--rule)">
+          <div style="font-size:13px">${item}</div>
+          <div style="font-size:12px; color:var(--ink-3)">${owner}</div>
+          <div>${status==='done' ? '<span class="badge ok">Complete</span>' : status==='in-progress' ? '<span class="badge warn">In progress</span>' : '<span class="badge neutral">Pending</span>'}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="section-h">Governance disclosures · Form 990 Part VI</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">Required policies</div>
+        <table class="table-sm">
+          <tr><td>Conflict of interest policy</td><td><span class="badge ok">Adopted 2020</span></td></tr>
+          <tr><td>Whistleblower policy</td><td><span class="badge ok">Adopted 2020</span></td></tr>
+          <tr><td>Document retention &amp; destruction policy</td><td><span class="badge ok">Adopted 2020</span></td></tr>
+          <tr><td>Gift acceptance policy</td><td><span class="badge ok">Rev. 2024</span></td></tr>
+          <tr><td>Investment policy statement</td><td><span class="badge ok">Rev. 2026</span></td></tr>
+          <tr><td>Grant-making policy</td><td><span class="badge ok">Rev. 2025</span></td></tr>
+          <tr><td>Executive comp. review (independent)</td><td><span class="badge ok">Annual · Q1</span></td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">Board composition</div>
+        <table class="table-sm">
+          <tr><td>Board size</td><td class="mono-cell" style="text-align:right">9</td></tr>
+          <tr><td>Independent directors</td><td class="mono-cell" style="text-align:right">8 (89%)</td></tr>
+          <tr><td>Family / related members</td><td class="mono-cell" style="text-align:right">0</td></tr>
+          <tr><td>Audit committee (independent)</td><td class="mono-cell" style="text-align:right">3</td></tr>
+          <tr><td>Compensation committee</td><td class="mono-cell" style="text-align:right">3</td></tr>
+          <tr><td>Investment committee</td><td class="mono-cell" style="text-align:right">4</td></tr>
+          <tr><td>Full board meetings · 2026</td><td class="mono-cell" style="text-align:right">4 held</td></tr>
+          <tr><td>Average attendance</td><td class="mono-cell" style="text-align:right">94%</td></tr>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ---------- ADMIN: REPORTS ----------
+AdminPages['a-reports'] = () => `
+  <div class="page-h">
+    <div><h1>Reports</h1><div class="page-h-sub">Scheduled, ad-hoc, and regulatory filings</div></div>
+    <div class="page-h-actions">
+      <button class="btn ghost">Templates</button>
+      <button class="btn">+ New report</button>
+    </div>
+  </div>
+
+  <div class="section-h">Scheduled reports <span class="section-h-sub">Running on autoschedule</span></div>
+  <div class="card" style="padding:0; margin-bottom:16px">
+    ${[
+      { name:'Donor quarterly statements', freq:'Quarterly · 15th of month after close', next:'2027-01-15', aud:'Donors (142)', ch:'Email + portal' },
+      { name:'Board impact brief', freq:'Monthly · 1st', next:'2026-11-01', aud:'Board of Directors (9)', ch:'Email + PDF' },
+      { name:'Form 990 workpaper assembly', freq:'Annual · Dec 15', next:'2026-12-15', aud:'Grant Thornton', ch:'Secure portal' },
+      { name:'State charitable renewal packets', freq:'Annual · state-specific', next:'Rolling', aud:'State AGs / regulators', ch:'E-file + certified mail' },
+      { name:'Investment committee deck', freq:'Quarterly · 10 days before meeting', next:'2026-11-20', aud:'Investment Committee (4)', ch:'Email + in-person' },
+      { name:'Fee reconciliation · all tiers', freq:'Monthly · 5th', next:'2026-11-05', aud:'Finance + donors', ch:'Portal + CSV' },
+      { name:'Grant impact rollup', freq:'Quarterly · 30 days after close', next:'2026-12-30', aud:'Donors + public', ch:'Portal + website' },
+      { name:'Donor acknowledgment letters (CWA)', freq:'Weekly batch + real-time triggers', next:'Continuous', aud:'All contributors $250+', ch:'Email + certified' },
+      { name:'IRS Form 1099 batch', freq:'Annual · Jan 31', next:'2027-01-31', aud:'38 contractors + IRS', ch:'E-file + mail' },
+      { name:'OFAC rescreen summary', freq:'Weekly · Sunday', next:'2026-10-26', aud:'Compliance committee', ch:'Internal' },
+    ].map(r => `
+      <div style="display:grid; grid-template-columns: 2fr 2fr 1fr 1.5fr auto; gap:16px; align-items:center; padding:14px 20px; border-bottom:1px solid var(--rule)">
+        <div><div style="font-weight:500; font-size:13px">${r.name}</div><div style="color:var(--ink-3); font-size:12px; margin-top:2px">${r.freq}</div></div>
+        <div><div style="font-size:12px; color:var(--ink-3)">Audience</div><div style="font-size:13px">${r.aud}</div></div>
+        <div><div style="font-size:12px; color:var(--ink-3)">Channel</div><div style="font-size:12px">${r.ch}</div></div>
+        <div><div style="font-size:12px; color:var(--ink-3)">Next</div><div class="mono-cell" style="font-size:12px">${r.next}</div></div>
+        <button class="btn ghost sm">Configure</button>
+      </div>`).join('')}
+  </div>
+
+  <div class="section-h">Report templates</div>
+  <div class="grid-2">
+    ${[
+      { icon:'990', name:'IRS Form 990 Full Return', sub:'Public charity annual return · 20 schedules supported' },
+      { icon:'DAF', name:'DAF-sponsor supplemental', sub:'Schedule D Parts I-V · aggregate values & disbursements' },
+      { icon:'Q', name:'Donor quarterly statement', sub:'Balance, activity, allocation, impact · PDF' },
+      { icon:'IM', name:'Impact rollup · by theme', sub:'Beneficiary metrics, outcomes, grantee reports' },
+      { icon:'IC', name:'Investment Committee deck', sub:'Performance, allocation drift, policy conformance' },
+      { icon:'St', name:'State AG · CHAR500 / RRF-1 / Form PC', sub:'Pre-filled per-state packets' },
+      { icon:'CF', name:'Fee reconciliation', sub:'Donor-level + aggregate monthly fee draws' },
+      { icon:'8K', name:'Compliance exceptions report', sub:'PPA, OFAC, state registration posture' },
+    ].map(t => `
+      <div class="report-tmpl">
+        <div class="report-tmpl-left">
+          <div class="report-tmpl-icon">${t.icon}</div>
+          <div><div class="report-tmpl-title">${t.name}</div><div class="report-tmpl-sub">${t.sub}</div></div>
+        </div>
+        <div style="display:flex; gap:8px">
+          <button class="btn ghost sm">Preview</button>
+          <button class="btn sm">Generate</button>
+        </div>
+      </div>`).join('')}
+  </div>
+
+  <div class="section-h">Recent ad-hoc reports</div>
+  <div class="card" style="padding:0">
+    <table>
+      <thead><tr><th>Report</th><th>Requested by</th><th>Generated</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Thematic vehicle performance · 2026 YTD</strong></td><td>Board of Directors</td><td class="mono-cell">2026-10-14</td><td><button class="btn ghost sm">Download</button></td></tr>
+        <tr><td><strong>Grant denial log · Q3</strong></td><td>Compliance Committee</td><td class="mono-cell">2026-10-10</td><td><button class="btn ghost sm">Download</button></td></tr>
+        <tr><td><strong>Donor churn analysis · 24mo</strong></td><td>Executive Director</td><td class="mono-cell">2026-10-02</td><td><button class="btn ghost sm">Download</button></td></tr>
+        <tr><td><strong>Grantmaking by congressional district</strong></td><td>Public Policy team</td><td class="mono-cell">2026-09-28</td><td><button class="btn ghost sm">Download</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+`;
+
+// ---------- ADMIN: AUDIT ----------
+AdminPages['a-audit'] = () => `
+  <div class="page-h">
+    <div><h1>Audit &amp; Workpapers</h1><div class="page-h-sub">Grant Thornton LLP · FY2026 engagement</div></div>
+    <div class="page-h-actions">
+      <button class="btn ghost">Auditor portal</button>
+      <button class="btn">+ New PBC item</button>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-h"><div class="card-title">Engagement timeline</div></div>
+      <div style="font-size:13px; line-height:1.9">
+        <div><strong>Oct 2026</strong> — PBC schedule assembly (34% complete)</div>
+        <div><strong>Jan 2027</strong> — Interim procedures &amp; walkthroughs</div>
+        <div><strong>Feb 15, 2027</strong> — Fieldwork start · 3 weeks on-site</div>
+        <div><strong>Mar 15, 2027</strong> — Draft financial statements</div>
+        <div><strong>Apr 15, 2027</strong> — Management letter &amp; corrections</div>
+        <div><strong>Apr 30, 2027</strong> — Final opinion + audited financials issued</div>
+        <div><strong>May 15, 2027</strong> — 990 filed with audited financials attached</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-title">Prior-year findings</div></div>
+      <table class="table-sm">
+        <tr><td>Significant deficiencies</td><td style="text-align:right"><strong>0</strong></td></tr>
+        <tr><td>Material weaknesses</td><td style="text-align:right"><strong>0</strong></td></tr>
+        <tr><td>Management letter comments</td><td style="text-align:right">2</td></tr>
+        <tr><td>— Investment allocation documentation</td><td><span class="badge ok">Remediated Q1</span></td></tr>
+        <tr><td>— Noncash gift valuation memo cadence</td><td><span class="badge ok">Remediated Q2</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-title">Workpaper library · tie-outs</div></div>
+    <table>
+      <thead><tr><th>WP</th><th>Area</th><th>Preparer</th><th>Reviewer</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="mono-cell">A-100</td><td>Cash &amp; equivalents · 4 accounts</td><td>Finance</td><td>Grant Thornton</td><td><span class="badge ok">Done</span></td></tr>
+        <tr><td class="mono-cell">B-200</td><td>Investments · fair value hierarchy</td><td>Finance</td><td>Grant Thornton</td><td><span class="badge warn">In progress</span></td></tr>
+        <tr><td class="mono-cell">C-300</td><td>Contributions receivable (pledges)</td><td>Operations</td><td>Grant Thornton</td><td><span class="badge ok">Done</span></td></tr>
+        <tr><td class="mono-cell">D-400</td><td>Noncash contributions · appraisals</td><td>Compliance</td><td>Grant Thornton</td><td><span class="badge warn">In progress</span></td></tr>
+        <tr><td class="mono-cell">E-500</td><td>Grants payable · obligations</td><td>Operations</td><td>Grant Thornton</td><td><span class="badge ok">Done</span></td></tr>
+        <tr><td class="mono-cell">F-600</td><td>Net asset classification · with/without restriction</td><td>Finance</td><td>Grant Thornton</td><td><span class="badge warn">In progress</span></td></tr>
+        <tr><td class="mono-cell">G-700</td><td>Related party · Schedule L support</td><td>Compliance</td><td>Grant Thornton</td><td><span class="badge neutral">Pending</span></td></tr>
+        <tr><td class="mono-cell">H-800</td><td>UBIT · K-1 pass-through analysis</td><td>Tax</td><td>Grant Thornton</td><td><span class="badge warn">In progress</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+`;
+
+// ---------- ADMIN: INTEGRATIONS ----------
+AdminPages['a-integrations'] = () => `
+  <div class="page-h">
+    <div><h1>Integrations</h1><div class="page-h-sub">Fund admin, custody, accounting, and compliance providers</div></div>
+    <div class="page-h-actions"><button class="btn">+ Add integration</button></div>
+  </div>
+
+  <div class="section-h">Fund administration</div>
+  <div class="connector-grid" style="margin-bottom:24px">
+    ${[
+      ['Carta', 'Ca', 'Cap table + SPV admin', 'live'],
+      ['AngelList', 'AL', 'Private co-invest SPV formation', 'live'],
+      ['Juniper Square', 'JS', 'Real asset &amp; fund admin', 'live'],
+      ['Allvue', 'Av', 'Alternative investment ops', 'available'],
+    ].map(([n, l, s, status]) => `
+      <div class="conn-card">
+        <div class="conn-logo">${l}</div>
+        <div class="conn-name">${n}</div>
+        <div class="conn-sub">${s}</div>
+        <div class="conn-status"><span class="badge ${status==='live'?'ok':'neutral'}">${status==='live'?'● Live':'Available'}</span></div>
+      </div>`).join('')}
+  </div>
+
+  <div class="section-h">Custody &amp; brokerage</div>
+  <div class="connector-grid" style="margin-bottom:24px">
+    ${[
+      ['Charles Schwab', 'CS', 'DTC 0164 · primary custody', 'live'],
+      ['Fidelity', 'Fi', 'DTC 0226 · secondary', 'live'],
+      ['Goldman Sachs', 'GS', 'DTC 0005 · HNW accounts', 'live'],
+      ['Morgan Stanley', 'MS', 'DTC 0015 · HNW', 'live'],
+      ['Silicon Valley Bank', 'SV', 'Operating + wire', 'live'],
+      ['Coinbase Institutional', 'Co', 'Crypto custody', 'live'],
+    ].map(([n, l, s, status]) => `
+      <div class="conn-card">
+        <div class="conn-logo">${l}</div>
+        <div class="conn-name">${n}</div>
+        <div class="conn-sub">${s}</div>
+        <div class="conn-status"><span class="badge ok">● Live</span></div>
+      </div>`).join('')}
+  </div>
+
+  <div class="section-h">Accounting &amp; reporting</div>
+  <div class="connector-grid" style="margin-bottom:24px">
+    ${[
+      ['NetSuite', 'NS', 'General ledger · nonprofit module', 'live'],
+      ['QuickBooks Enterprise', 'QB', 'Secondary · field office', 'live'],
+      ['Addepar', 'Ad', 'Investment reporting · aggregation', 'live'],
+      ['Bloomberg AIM', 'Bb', 'Order mgmt + compliance', 'live'],
+    ].map(([n, l, s]) => `
+      <div class="conn-card">
+        <div class="conn-logo">${l}</div>
+        <div class="conn-name">${n}</div>
+        <div class="conn-sub">${s}</div>
+        <div class="conn-status"><span class="badge ok">● Live</span></div>
+      </div>`).join('')}
+  </div>
+
+  <div class="section-h">Compliance &amp; vetting</div>
+  <div class="connector-grid">
+    ${[
+      ['NGOsource', 'NG', 'Equivalency determinations', 'live'],
+      ['Persona', 'Pe', 'KYC / identity verification', 'live'],
+      ['LexisNexis Bridger', 'LN', 'OFAC + sanctions screening', 'live'],
+      ['Hummingbird', 'Hu', 'AML case management', 'live'],
+      ['Charity Navigator API', 'CN', 'Grantee ratings + 990 feed', 'live'],
+      ['GuideStar / Candid', 'Gu', 'IRS Pub. 78 + BMF validation', 'live'],
+      ['Harbor Compliance', 'Ha', 'State charitable registration', 'live'],
+      ['DocuSign', 'DS', 'Form 8283 countersign flow', 'live'],
+    ].map(([n, l, s]) => `
+      <div class="conn-card">
+        <div class="conn-logo">${l}</div>
+        <div class="conn-name">${n}</div>
+        <div class="conn-sub">${s}</div>
+        <div class="conn-status"><span class="badge ok">● Live</span></div>
+      </div>`).join('')}
+  </div>
+`;
+
+// ---------- ADMIN: CRM ----------
+AdminPages['a-crm'] = () => `
+  <div class="page-h">
+    <div><h1>CRM Integration</h1><div class="page-h-sub">Push donor &amp; grant data to your advisor workflow</div></div>
+  </div>
+  <div class="grid-3" style="margin-bottom:20px">
+    ${[
+      ['Salesforce NPSP', 'SF', 'Primary CRM · 142 donor records · 2-way sync', 'live'],
+      ['HubSpot', 'HS', 'Prospect pipeline · marketing', 'live'],
+      ["Blackbaud Raiser's Edge", 'BB', 'Legacy records · 1-way import', 'available'],
+    ].map(([n, l, s, status]) => `
+      <div class="conn-card">
+        <div class="conn-logo">${l}</div>
+        <div class="conn-name">${n}</div>
+        <div class="conn-sub">${s}</div>
+        <div class="conn-status"><span class="badge ${status==='live'?'ok':'neutral'}">${status==='live'?'● Connected':'Available'}</span></div>
+      </div>`).join('')}
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-title">Field mappings · Salesforce</div></div>
+    <table class="table-sm">
+      <tr><td><strong>Meridian field</strong></td><td><strong>Salesforce field</strong></td><td><strong>Sync direction</strong></td><td><strong>Last sync</strong></td></tr>
+      <tr><td class="mono-cell">donor.balance</td><td class="mono-cell">Account.DAF_Balance__c</td><td>→ One-way</td><td class="mono-cell">2026-10-20 03:00</td></tr>
+      <tr><td class="mono-cell">donor.ytd_grants</td><td class="mono-cell">Account.YTD_Grants__c</td><td>→ One-way</td><td class="mono-cell">2026-10-20 03:00</td></tr>
+      <tr><td class="mono-cell">donor.tier</td><td class="mono-cell">Account.DAF_Tier__c</td><td>→ One-way</td><td class="mono-cell">2026-10-20 03:00</td></tr>
+      <tr><td class="mono-cell">donor.advisor</td><td class="mono-cell">Account.OwnerId</td><td>↔ Two-way</td><td class="mono-cell">2026-10-20 03:00</td></tr>
+      <tr><td class="mono-cell">grant.*</td><td class="mono-cell">Opportunity.*</td><td>→ One-way</td><td class="mono-cell">2026-10-20 03:00</td></tr>
+      <tr><td class="mono-cell">contact.email</td><td class="mono-cell">Contact.Email</td><td>↔ Two-way</td><td class="mono-cell">2026-10-20 03:00</td></tr>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-h"><div class="card-title">Recent sync activity</div></div>
+    <table class="table-sm">
+      <tr><td class="mono-cell">03:00 UTC</td><td>Full donor sync · 142 records</td><td><span class="badge ok">Success</span></td></tr>
+      <tr><td class="mono-cell">02:30 UTC</td><td>Incremental grant sync · 23 new, 8 updated</td><td><span class="badge ok">Success</span></td></tr>
+      <tr><td class="mono-cell">02:15 UTC</td><td>Contact sync · 184 contacts</td><td><span class="badge ok">Success</span></td></tr>
+    </table>
+  </div>
+`;
+
+// ---------- ADMIN: THRESHOLDS ----------
+AdminPages['a-thresholds'] = () => `
+  <div class="page-h">
+    <div><h1>Donor Control Thresholds</h1><div class="page-h-sub">Tier-based privileges and vehicle creation limits</div></div>
+    <div class="page-h-actions"><button class="btn">Edit tiers</button></div>
+  </div>
+
+  <div class="grid-3" style="margin-bottom:20px">
+    <div class="card" style="border-top:3px solid var(--ink-4)">
+      <div class="card-title">Standard</div>
+      <div style="color:var(--ink-3); font-size:12px; margin-top:4px">Entry tier · $5K minimum</div>
+      <div style="margin-top:16px; font-size:13px; line-height:1.9">
+        ✓ Grant recommendations<br/>
+        ✓ 3 mutual fund choices<br/>
+        ✓ Quarterly statements<br/>
+        ✓ 2 successor advisors<br/>
+        <span style="color:var(--ink-4)">— SPV access</span><br/>
+        <span style="color:var(--ink-4)">— Thematic vehicle</span>
+      </div>
+      <div class="meter" style="margin-top:14px"><div class="meter-fill" style="width:38%"></div></div>
+      <div style="font-size:11px; color:var(--ink-3); margin-top:6px"><strong>54</strong> donors · $92M AUM</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--moss)">
+      <div class="card-title">Premier</div>
+      <div style="color:var(--ink-3); font-size:12px; margin-top:4px">$500K minimum</div>
+      <div style="margin-top:16px; font-size:13px; line-height:1.9">
+        ✓ All Standard features<br/>
+        ✓ Full investment menu (15+ vehicles)<br/>
+        ✓ SPV access (co-invest)<br/>
+        ✓ Dedicated donor advisor<br/>
+        ✓ Monthly impact reports<br/>
+        <span style="color:var(--ink-4)">— Thematic vehicle creation</span>
+      </div>
+      <div class="meter" style="margin-top:14px"><div class="meter-fill" style="width:62%"></div></div>
+      <div style="font-size:11px; color:var(--ink-3); margin-top:6px"><strong>76</strong> donors · $586M AUM</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--info)">
+      <div class="card-title">Thematic Vehicle</div>
+      <div style="color:var(--ink-3); font-size:12px; margin-top:4px">$25M minimum · $50M for thematic vehicle creation</div>
+      <div style="margin-top:16px; font-size:13px; line-height:1.9">
+        ✓ All Premier features<br/>
+        ✓ <strong>Create thematic vehicle</strong> (sub-DAF for a cause)<br/>
+        ✓ Dedicated subadvisor + impact team<br/>
+        ✓ Custom SPV formation<br/>
+        ✓ Multi-generational succession structure<br/>
+        ✓ White-glove compliance support
+      </div>
+      <div class="meter" style="margin-top:14px"><div class="meter-fill" style="width:98%"></div></div>
+      <div style="font-size:11px; color:var(--ink-3); margin-top:6px"><strong>12</strong> donors · $742M AUM</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-title">Active thematic vehicles</div><div class="card-sub">Donor-created sub-DAFs with their own thematic focus</div></div>
+    <table>
+      <thead><tr><th>Vehicle</th><th>Lead donor</th><th>Theme</th><th>AUM</th><th>Grantees</th><th>Created</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Whitfield Climate Initiative</strong></td><td>Whitfield Family</td><td>Climate · policy, infrastructure</td><td>${fmt(62400000)}</td><td>24</td><td class="mono-cell">2022-04-15</td></tr>
+        <tr><td><strong>Northern Lights Education Fund</strong></td><td>Lindqvist Trust</td><td>Education · teacher pipelines</td><td>${fmt(54180000)}</td><td>18</td><td class="mono-cell">2023-01-20</td></tr>
+        <tr><td><strong>Maverick Health Partners</strong></td><td>Carmichael</td><td>Health · rural access</td><td>${fmt(51920000)}</td><td>31</td><td class="mono-cell">2023-07-02</td></tr>
+        <tr><td><strong>Greenline Civil Rights Fund</strong></td><td>Washington Family</td><td>Civil rights · policy</td><td>${fmt(48200000)}</td><td>22</td><td class="mono-cell">2024-02-11</td></tr>
+      </tbody>
+    </table>
+  </div>
+`;
+
+// ---------- ADMIN: FEES ----------
+AdminPages['a-fees'] = () => `
+  <div class="page-h">
+    <div><h1>Fees</h1><div class="page-h-sub">Schedule, controls, and upcoming cycle</div></div>
+    <div class="page-h-actions"><button class="btn ghost">Fee policy doc</button><button class="btn">Run Q4 cycle</button></div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-h"><div class="card-title">Fee schedule</div></div>
+      <table>
+        <thead><tr><th>AUM tier</th><th>Admin fee</th><th>Investment fee</th><th>All-in bps</th></tr></thead>
+        <tbody>
+          <tr><td>$0 – $500K</td><td class="mono-cell">0.90%</td><td class="mono-cell">0.25%</td><td class="mono-cell"><strong>115 bps</strong></td></tr>
+          <tr><td>$500K – $5M</td><td class="mono-cell">0.60%</td><td class="mono-cell">0.20%</td><td class="mono-cell"><strong>80 bps</strong></td></tr>
+          <tr><td>$5M – $25M</td><td class="mono-cell">0.40%</td><td class="mono-cell">0.15%</td><td class="mono-cell"><strong>55 bps</strong></td></tr>
+          <tr><td>$25M – $100M</td><td class="mono-cell">0.25%</td><td class="mono-cell">0.12%</td><td class="mono-cell"><strong>37 bps</strong></td></tr>
+          <tr><td>$100M +</td><td class="mono-cell">Custom</td><td class="mono-cell">Custom</td><td class="mono-cell"><strong>Negotiated</strong></td></tr>
+        </tbody>
+      </table>
+      <div style="color:var(--ink-3); font-size:12px; margin-top:12px">Fees charged monthly against average daily balance. Thematic vehicles have additional dedicated-staff fees. Deeper structure applies to SPVs.</div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-title">Charge controls</div></div>
+      ${[
+        ['Pre-charge donor notification', '7 days before draw'],
+        ['Pull from cash balance first', 'Avoid liquidating investments'],
+        ['Skip if grants pending', 'Prioritize charitable intent'],
+        ['Pre-pay annually (-5% discount)', 'Opt-in for Thematic'],
+        ['Fee waiver on new accounts', 'First 6 months'],
+      ].map(([t, s], i) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:${i<4?'1px solid var(--rule)':'none'}">
+          <div><div style="font-weight:500;font-size:13px">${t}</div><div style="color:var(--ink-3);font-size:12px;margin-top:2px">${s}</div></div>
+          <label class="toggle"><input type="checkbox" ${i<3?'checked':''}/><span class="slider"></span></label>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-title">Q4 2026 cycle preview</div><div class="card-sub">Scheduled for Nov 5 · $7,920,400 total draw</div></div>
+    <div style="margin-bottom:16px">
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:13px">
+        <span>Cash coverage across all accounts</span>
+        <span class="mono"><strong>97.4%</strong></span>
+      </div>
+      <div class="meter"><div class="meter-fill" style="width:97.4%"></div></div>
+      <div style="font-size:12px; color:var(--ink-3); margin-top:6px">4 accounts need partial investment liquidation · $208K from Impact Equity, $92K from Balanced Portfolio</div>
+    </div>
+    <table>
+      <thead><tr><th>Tier</th><th>Donors</th><th>Est. total draw</th><th>Cash coverage</th></tr></thead>
+      <tbody>
+        <tr><td>Standard</td><td>54</td><td class="mono-cell">${fmt(264500)}</td><td><span class="badge ok">100%</span></td></tr>
+        <tr><td>Premier</td><td>76</td><td class="mono-cell">${fmt(1172400)}</td><td><span class="badge ok">98%</span></td></tr>
+        <tr><td>Thematic</td><td>12</td><td class="mono-cell">${fmt(6483500)}</td><td><span class="badge warn">92%</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+`;
+
+// ============================================================================
+// BOOT
+// ============================================================================
+setTimeout(() => { moveSlider('donor'); }, 50);
+goDonor('d-home');
+</script>
+</body>
+</html>
